@@ -2,31 +2,34 @@ import discord
 from discord.ext import commands
 import time
 import asyncio
-import mysql.connector
+#import mysql.connector
 
-TOKEN = "NzMzMjUzOTg4ODAzMjgwOTQ2.XxAd_g.vaNDVuOaapejDzCOyDnb0bws0Zs"
+#MANUAL IMPORTS
+import settings as setting
+
+TOKEN = setting.TOKEN
 client = commands.Bot(command_prefix=".")
 
-mydb = mysql.connector.connect(host='localhost', user='root', password='', database='ticket')
-mycur = mydb.cursor(buffered=True)
-
-dict_counter = {'id':0}
-dict_counter_c_at_koders = {'id':0}
-
-count = 0
-
-mycur.execute("select * from partner_with_us")
-for row in mycur:
-	dict_counter['id'] += 1
-
-mycur.execute("select * from career_at_koders")
-for row in mycur:
-	dict_counter_c_at_koders['id'] += 1
-
-
-def insert(insert_query, value):
-	mycur.execute(insert_query, value)
-	mydb.commit()
+#mydb = mysql.connector.connect(host=setting.HOST, user=setting.USER, password=setting.PASSWORD, database=setting.DATABASE)
+#mycur = mydb.cursor(buffered=True)
+#
+#dict_counter = {'id':0}
+#dict_counter_c_at_koders = {'id':0}
+#
+#count = 0
+#
+#mycur.execute("select * from partner_with_us")
+#for row in mycur:
+#	dict_counter['id'] += 1
+#
+#mycur.execute("select * from career_at_koders")
+#for row in mycur:
+#	dict_counter_c_at_koders['id'] += 1
+#
+#
+#def insert(insert_query, value):
+#	mycur.execute(insert_query, value)
+#	mydb.commit()
 
 
 @client.event
@@ -47,7 +50,7 @@ async def create_channel(ctx, *, name):
 		colour = discord.Colour.blue()
 	)
 	# ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
-	channel = await ctx.guild.create_text_channel(name=name, category=client.get_channel(742716000650264607))
+	channel = await ctx.guild.create_text_channel(name=name, category=client.get_channel(setting.CHANNEL_ID))
 	await channel.set_permissions(member, overwrite=overwrite)
 	await channel.send(embed=embed)
 
@@ -64,7 +67,7 @@ async def on_raw_reaction_add(payload):
 
 
 	# for partner-with-us channel #742718907747532870
-	if message_id == 742718907747532870:
+	if message_id == setting.PARTNER_ID:
 		count += 1
 		guild_id = payload.guild_id
 		guild = discord.utils.find(lambda g : g.id==guild_id, client.guilds)
@@ -72,10 +75,10 @@ async def on_raw_reaction_add(payload):
 		name=str(member.name) + '-' + str(count)
 
 		if payload.emoji.name == 'tick':
-			channel = await guild.create_text_channel(name=name, category=client.get_channel(742722032382509167))
+			channel = await guild.create_text_channel(name=name, category=client.get_channel(setting.TICKET_CHANNEL_ID))
 
 	# for career-at-koders channel #742719341937557575
-	if message_id == 742719341937557575:
+	if message_id == setting.CAREER_ID:
 		count += 1
 		guild_id = payload.guild_id
 		guild = discord.utils.find(lambda g : g.id==guild_id, client.guilds)
@@ -83,10 +86,10 @@ async def on_raw_reaction_add(payload):
 		name=str(member.name) + '-' + str(count)
 
 		if payload.emoji.name == 'tick':
-			channel = await guild.create_text_channel(name=name, category=client.get_channel(742722032382509167))
+			channel = await guild.create_text_channel(name=name, category=client.get_channel(setting.TICKET_CHANNEL_ID))
 
 	# for community-member channel #742719397264883732
-	if message_id == 742719397264883732:
+	if message_id == setting.COMMUNITY_ID:
 		count += 1
 		guild_id = payload.guild_id
 		guild = discord.utils.find(lambda g : g.id==guild_id, client.guilds)
@@ -94,11 +97,11 @@ async def on_raw_reaction_add(payload):
 		name=str(member.name) + '-' + str(count)
 
 		if payload.emoji.name == 'tick':
-			channel = await guild.create_text_channel(name=name, category=client.get_channel(742722032382509167))
+			channel = await guild.create_text_channel(name=name, category=client.get_channel(setting.TICKET_CHANNEL_ID))
 
 
 	# for project-registration channel #742719618879324282
-	if message_id == 742719618879324282:
+	if message_id == setting.PROJECT_ID:
 		count += 1
 		guild_id = payload.guild_id
 		guild = discord.utils.find(lambda g : g.id==guild_id, client.guilds)
@@ -106,7 +109,7 @@ async def on_raw_reaction_add(payload):
 		name=str(member.name) + '-' + str(count)
 
 		if payload.emoji.name == 'tick':
-			channel = await guild.create_text_channel(name=name, category=client.get_channel(742722032382509167))
+			channel = await guild.create_text_channel(name=name, category=client.get_channel(setting.TICKET_CHANNEL_ID))
 
 
 @client.command()
@@ -297,4 +300,4 @@ async def register(ctx):
 
 
 client.run(TOKEN)
-mydb.close()
+#mydb.close()
