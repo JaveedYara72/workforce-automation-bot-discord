@@ -1,11 +1,21 @@
 import discord
-import settings as setting
 import asyncio
 import datetime
 import re
+import mysql.connector
+import settings as setting
+
+# mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
 
 async def add(client, ctx, member):
+
+	mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
+	mycur = mydb.cursor(buffered=True)
 	inputs = []
+
+	def insert(insert_query, value):
+		mycur.execute(insert_query, value)
+		mydb.commit()
 	
 	def pred(m):
 		return m.author == member and m.channel == ctx
@@ -270,6 +280,11 @@ async def add(client, ctx, member):
 	email = inputs[5]
 	phone = inputs[6]
 
+	if gender == '♂️':
+		gender = "Male"
+	elif gender == '♀':
+		gender = "Female"
+
 	result = await take_reaction()
 	await text.delete()
 
@@ -279,21 +294,12 @@ async def add(client, ctx, member):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
+		insert_query = "insert into partner_with_us(Name, Address, Gender, DOB, Joined_At, Mail, Phone, Whatsapp) values(%s, %s, %s, %s, %s, %s, %s, %s)"
+		value = (name, address, gender, dob, timestamp, email, phone, whatsapp)
+		insert(insert_query, value)
 		await ctx.send("Registration Completed.")
-		# partner-with-us channel
-		# if channel.id == setting.PARTNER_ID:
-			# await ctx.send("Registration Completed at partner-with-us channel")
-			# insert_query = "insert into partner_with_us(Name, Address, Gender, DOB, Joined_At, Mail, Phone, Whatsapp) values(%s, %s, %s, %s, %s, %s, %s, %s)"
-			# value = (name, address, gender, dob, timestamp, email, phone, whatsapp)
-			# insert(insert_query, value)
-		# career-at-koders channel
-		# elif channel.id == setting.CAREER_ID:
-		# 	await ctx.send("Registration Completed at career-at-koders channel")
-		# 	# insert_query = "insert into career_at_koders(Name, Address, Gender, DOB, Joined_At, Mail, Phone, Whatsapp) values(%s, %s, %s, %s, %s, %s, %s, %s)"
-		# 	# value = (name, address, gender, dob, timestamp, email, phone, whatsapp)
-		# 	# insert(insert_query, value)
-		# else:
-		# 	await ctx.send("invalid channel to done registration with!")
+		mydb.close()
 
 	else:
 		await ctx.send("Registeration failed. Ask a Koder for registration")
+		mydb.close()
