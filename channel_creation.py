@@ -12,17 +12,57 @@ import aiohttp
 # MANUAL IMPORTS
 import register_project as REGISTER_PROJECT
 import register_member as REGISTER_MEMBER
+import register_for_career_at_koders as CAREER_AT_KODERS
 import register_community as REGISTER_COMMUNITY
 import settings as setting
 
 TOKEN = setting.TOKEN
 client = commands.Bot(command_prefix=".")
 
-# mydb = mysql.connector.connect(host='localhost', user='root', password='', database='ticket')
-# mycur = mydb.cursor(buffered=True)
+# mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
+
+mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
+mycur = mydb.cursor(buffered=True)
 
 count = 0
 
+# mycur.execute("""create table partner_with_us(Id int NOT NULL AUTO_INCREMENT, 
+# 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE', 
+# 	Address VARCHAR(100) NOT NULL DEFAULT 'NONE', 
+# 	Gender VARCHAR(500) NOT NULL DEFAULT 'NONE', 
+# 	DOB VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Joined_At VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Mail VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Phone VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Whatsapp VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	PRIMARY KEY (Id))""")
+
+
+# mycur.execute("""create table career_at_koders(Id int NOT NULL AUTO_INCREMENT, 
+# 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE', 
+# 	Address VARCHAR(100) NOT NULL DEFAULT 'NONE', 
+# 	Gender VARCHAR(500) NOT NULL DEFAULT 'NONE', 
+# 	DOB VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Joined_At VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Mail VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Phone VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Whatsapp VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	PRIMARY KEY (Id))""")
+
+# mycur.execute("""create table community_member(Name VARCHAR(100) NOT NULL DEFAULT 'NONE', 
+# 	Gender VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	Phone VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	Mail VARCHAR(100) NOT NULL DEFAULT 'NONE')""")
+
+
+# mycur.execute("""create table project_registration(Id int NOT NULL AUTO_INCREMENT, 
+# 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	Description VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	Hand_In_Date VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	Client_Id VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	Estimated_Amount VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Source_Material_Links VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	PRIMARY KEY (Id))""")
 
 def insert(insert_query, value):
 	mycur.execute(insert_query, value)
@@ -37,16 +77,11 @@ async def on_ready():
 async def create_channel(ctx, *, name):
 	guild = ctx.guild
 	member = ctx.message.author
-	# overwrite = discord.PermissionOverwrite()
-	# overwrite.send_messages = False
-	# overwrite.read_messages = True
-
 	embed = discord.Embed(
 		title = 'Want to create ticket for registering for **{}**'.format(name),
 		description = 'React below with tick.',
 		colour = discord.Colour.blue()
 	)
-	# ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
 	channel = await ctx.guild.create_text_channel(name=name, category=client.get_channel(setting.CHANNEL_ID))
 	await channel.send(embed=embed)
 
@@ -54,7 +89,7 @@ async def create_channel(ctx, *, name):
 async def on_raw_reaction_add(payload):
 	global count
 	global channel_name
-	inputs = []
+	# inputs = []
 	
 	message_id = payload.message_id
 	channel_id = payload.channel_id
@@ -137,7 +172,7 @@ async def on_raw_reaction_add(payload):
 
 				ctx = channel
 
-				await REGISTER_MEMBER.add(client, ctx, member)
+				await CAREER_AT_KODERS.add(client, ctx, member)
 
 
 				result = await take_reaction()
@@ -269,22 +304,26 @@ async def meme(ctx):
 
 @client.event
 async def on_message_delete(message):
-	author = message.author.name
-	content = message.content
-	channel = message.channel
+	try:
+		author = message.author.name
+		content = message.content
+		channel = message.channel
 
-	embed = discord.Embed(
-		title="Deleted Message",
-		description="By {}".format(author),
-		colour = discord.Colour.blue()
-	)
-	embed.add_field(name="Channel", value=channel, inline=False)
-	embed.add_field(name="Message", value=content, inline=False)
+		embed = discord.Embed(
+			title="Deleted Message",
+			description="By {}".format(author),
+			colour = discord.Colour.blue()
+		)
+		embed.add_field(name="Channel", value=channel, inline=False)
+		embed.add_field(name="Message", value=content, inline=False)
 
-	async with aiohttp.ClientSession() as session:
-		webhook = Webhook.from_url(setting.MESSAGE_WEBHOOK, adapter=AsyncWebhookAdapter(session))
-		await webhook.send(embed=embed)
-
+		async with aiohttp.ClientSession() as session:
+			webhook = Webhook.from_url(setting.MESSAGE_WEBHOOK, adapter=AsyncWebhookAdapter(session))
+			await webhook.send(embed=embed)
+	except Exception as error:
+		async with aiohttp.ClientSession() as session:
+			webhook = Webhook.from_url(setting.EXCEPTION_WEBHOOK, adapter=AsyncWebhookAdapter(session))
+			await webhook.send(error)
 
 @client.event
 async def on_command_error(ctx, error):
@@ -306,5 +345,5 @@ async def on_command_error(ctx, error):
 
 		raise error
 
-
+mydb.close()
 client.run(TOKEN)
