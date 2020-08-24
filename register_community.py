@@ -1,9 +1,19 @@
 import discord
 import settings as setting
 import re
+import mysql.connector
+import asyncio
 
 async def add(client, ctx, member):
+
+	# For Database connectivity
+	mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
+	mycur = mydb.cursor(buffered=True)
 	inputs = []
+
+	def insert(insert_query, value):
+		mycur.execute(insert_query, value)
+		mydb.commit()
 	
 	def pred(m):
 		return m.author == member and m.channel == ctx
@@ -142,7 +152,7 @@ async def add(client, ctx, member):
 
 	# Embed for mail
 	embed = discord.Embed(title="Great, next step! (3/3)",
-    	description="Please enter source-material-links\n(we won't spam, pinky promise!)")
+    	description="Please enter mail\n(we won't spam, pinky promise!)")
 	embed.set_author(name="Welcome to Koders | Registration",
                      icon_url="https://cdn.discordapp.com/attachments/700257704723087359/709710821382553640/K_with_bg_1.png")
 	embed.set_footer(text="""Example\njane@gmail.com""")
@@ -183,9 +193,14 @@ async def add(client, ctx, member):
 	await text.add_reaction(emoji="❎")
 
 	name = inputs[0]
-	description = inputs[1]
-	estimated_amount = inputs[2]
-	source_material_links = inputs[3]
+	gender = inputs[1]
+	phone = inputs[2]
+	mail = inputs[3]
+
+	if gender == '♂️':
+		gender = "Male"
+	elif gender == '♀':
+		gender = "Female"
 
 
 	result = await take_reaction()
@@ -196,11 +211,13 @@ async def add(client, ctx, member):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
+
+		insert_query = "insert into community_member(Name, Gender, Phone, Mail) values(%s, %s, %s, %s)"
+		value = (name, gender, phone, mail)
+		insert(insert_query, value)
 		await ctx.send("Registration Completed for community-member")
-		# project-registration
-		# if channel.id == setting.PROJECT_ID:
-		# 	await ctx.send("Registration Completed for project-registration")
-		# else:
-		# 	await ctx.send("Invalid channel for registration.")
+		mydb.close()
+
 	else:
 		await ctx.send("Registeration failed. Ask a Koder for registration")
+		mydb.close()
