@@ -133,6 +133,12 @@ async def add(client, ctx, member):
 	embed.set_footer(text="Example\n728746XXXX")
 	textEmbed = await ctx.send(embed=embed)
 	textInput = await take_input()
+
+	timestamp = textInput.created_at
+	discord_username = textInput.author
+	discord_username = str(discord_username)
+
+	username, client_id = discord_username.split('#')
 	
 	if validate_phone(textInput.content):
 		inputs.append(textInput.content)
@@ -212,10 +218,10 @@ async def add(client, ctx, member):
 
 	if (result):
 
-		insert_query = "insert into community_member(Name, Gender, Phone, Mail) values(%s, %s, %s, %s)"
-		value = (name, gender, phone, mail)
+		insert_query = "insert into community(Name, Discord_Username, Mail, Phone, Gender, Joined_At) values(%s, %s, %s, %s, %s, %s)"
+		value = (name, discord_username, mail, phone, gender, timestamp)
 		insert(insert_query, value)
-		await ctx.send("Registration Completed for community-member")
+		await ctx.send("Registration Completed for community.")
 		mydb.close()
 
 	else:
