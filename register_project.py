@@ -1,8 +1,18 @@
 import discord
 import settings as setting
+import mysql.connector
+from datetime import date
 
 async def add(client, ctx, member):
+
+	# For Database
+	mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
+	mycur = mydb.cursor(buffered=True)
 	inputs = []
+
+	def insert(insert_query, value):
+		mycur.execute(insert_query, value)
+		mydb.commit()
 	
 	def pred(m):
 		return m.author == member and m.channel == ctx
@@ -75,13 +85,12 @@ async def add(client, ctx, member):
 	await textInput.delete()
 	await textEmbed.delete()
 
-	# Embed for source-material-links
+	# Embed for Deadline
 	embed = discord.Embed(title="Great, next step! (3/3)",
-    	description="Please enter source-material-links\n(we won't spam, pinky promise!)")
+    	description="Please enter deadline\n(we won't spam, pinky promise!)")
 	embed.set_author(name="Welcome to Koders | Registration",
                      icon_url="https://cdn.discordapp.com/attachments/700257704723087359/709710821382553640/K_with_bg_1.png")
-	embed.set_footer(text="""Example\nhttps://discordpy.readthedocs.io/en/latest/ext/commands/commands.html\n
-		https://discordpy.readthedocs.io/en/latest/migrating.html""")
+	embed.set_footer(text="""Example\n7/1/2021""")
 	textEmbed = await ctx.send(embed=embed)
 	textInput = await take_input()
 	message = textInput
@@ -97,7 +106,7 @@ async def add(client, ctx, member):
 	embed.add_field(name="Name", value=inputs[0], inline=False)
 	embed.add_field(name="Description", value=inputs[1], inline=False)
 	embed.add_field(name="Estimated-Amount", value=inputs[2], inline=True)
-	embed.add_field(name="Source-Material-Links", value=inputs[3], inline=False)
+	embed.add_field(name="Deadline", value=inputs[3], inline=False)
 
 	text = await ctx.send(embed=embed)
 
@@ -108,7 +117,15 @@ async def add(client, ctx, member):
 	name = inputs[0]
 	description = inputs[1]
 	estimated_amount = inputs[2]
-	source_material_links = inputs[3]
+	deadline = inputs[3]
+
+	hand_in_date = date.today()
+
+
+	# This part needs to be handled by try except clause
+	mycur.execute("select Id from client where Name = %s", (name, ))
+	row = mycur.fetchone()
+	client_id = row[0]
 
 
 	result = await take_reaction()
@@ -119,11 +136,12 @@ async def add(client, ctx, member):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
+		insert_query = "insert into project(Name, Description, Hand_In_Date, Deadline, Client_Id, Status, Priority, Estimated_Amount) values(%s, %s, %s, %s, %s, %s, %s, %s)"
+		value = (name, description, hand_in_date, deadline, client_id, "On Hold", "High", estimated_amount)
+		insert(insert_query, value)
 		await ctx.send("Registration Completed for project-registration")
-		# project-registration
-		# if channel.id == setting.PROJECT_ID:
-		# 	await ctx.send("Registration Completed for project-registration")
-		# else:
-		# 	await ctx.send("Invalid channel for registration.")
+		mydb.close()
+
 	else:
 		await ctx.send("Registeration failed. Ask a Koder for registration")
+		mydb.close()
