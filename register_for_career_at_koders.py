@@ -294,7 +294,7 @@ async def add(client, ctx, member):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
-		insert_query = "insert into partner_with_us(Name, Address, Gender, DOB, Joined_At, Mail, Phone, Whatsapp) values(%s, %s, %s, %s, %s, %s, %s, %s)"
+		insert_query = "insert into career_at_koders(Name, Address, Gender, DOB, Joined_At, Mail, Phone, Whatsapp) values(%s, %s, %s, %s, %s, %s, %s, %s)"
 		value = (name, address, gender, dob, timestamp, email, phone, whatsapp)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed.")
