@@ -4,6 +4,10 @@ import re
 import mysql.connector
 import asyncio
 
+# MANUAL IMPORT
+import email_template as EMAIL_TEMPLATE
+
+
 async def add(client, ctx, member):
 
 	# For Database connectivity
@@ -136,6 +140,7 @@ async def add(client, ctx, member):
 
 	timestamp = textInput.created_at
 	discord_username = textInput.author
+	author = textInput.author
 	discord_username = str(discord_username)
 
 	username, client_id = discord_username.split('#')
@@ -222,6 +227,8 @@ async def add(client, ctx, member):
 		value = (name, discord_username, mail, phone, gender, timestamp)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed for community.")
+		await author.send("Thank you for showing interest at Koders.")
+		await EMAIL_TEMPLATE.Email_Community(mail, name)
 		mydb.close()
 
 	else:
