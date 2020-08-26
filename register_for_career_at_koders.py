@@ -5,6 +5,9 @@ import re
 import mysql.connector
 import settings as setting
 
+# MANUAL IMPORT
+import email_template as EMAIL_TEMPLATE
+
 # mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
 
 async def add(client, ctx, member):
@@ -235,6 +238,11 @@ async def add(client, ctx, member):
 	message = textInput
 
 	timestamp = textInput.created_at
+	discord_username = textInput.author
+	author = textInput.author
+	discord_username = str(discord_username)
+
+	username, client_id = discord_username.split('#')
 	
 	if validate_phone(textInput.content):
 		inputs.append(textInput.content)
@@ -298,6 +306,8 @@ async def add(client, ctx, member):
 		value = (name, address, gender, dob, timestamp, email, phone, whatsapp)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed.")
+		await author.send("Thank you for showing interest at Koders.")
+		await EMAIL_TEMPLATE.Email_Career_At_Koders(email, name)
 		mydb.close()
 
 	else:
