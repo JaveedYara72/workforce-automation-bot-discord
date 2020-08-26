@@ -3,6 +3,9 @@ import settings as setting
 import mysql.connector
 from datetime import date
 
+# MANUAL IMPORT
+import email_template as EMAIL_TEMPLATE
+
 async def add(client, ctx, member):
 
 	# For Database
@@ -51,10 +54,10 @@ async def add(client, ctx, member):
 
 	# Embed for name
 	embed = discord.Embed(title="Hello there! (0/3)",
-    				description="Let's begin your registration.\n\nPlease enter your full name.")
+    				description="Let's begin your registration.\n\nPlease enter your prject name.")
 	embed.set_author(name="Welcome to Koders | Registration",
                      icon_url="https://cdn.discordapp.com/attachments/700257704723087359/709710821382553640/K_with_bg_1.png")
-	embed.set_footer(text="Example\nJane Doe")
+	embed.set_footer(text="Example\nDiscord bot")
 	textEmbed = await ctx.send(embed=embed)
 	textInput = await take_input()
 	inputs.append(textInput.content)
@@ -69,6 +72,13 @@ async def add(client, ctx, member):
 	embed.set_footer(text="Example\nThis project is basically on registering the users to the different channels.")
 	textEmbed = await ctx.send(embed=embed)
 	textInput = await take_input()
+
+	timestamp = textInput.created_at
+	discord_username = textInput.author
+	author = textInput.author
+	discord_username = str(discord_username)
+
+
 	inputs.append(textInput.content)
 	await textInput.delete()
 	await textEmbed.delete()
@@ -123,9 +133,21 @@ async def add(client, ctx, member):
 
 
 	# This part needs to be handled by try except clause
-	mycur.execute("select Id from client where Name = %s", (name, ))
-	row = mycur.fetchone()
-	client_id = row[0]
+	try:
+		mycur.execute("select Id, Mail, Name from client where Discord_Username = %s", (discord_username, ))
+		row = mycur.fetchone()
+
+		if row:
+			client_id = row[0]
+			email = row[1]
+			client_name = row[2]
+		else:
+			await ctx.send("you are not a client. First register as client.")
+
+	except Exception as error:
+		async with aiohttp.ClientSession() as session:
+			webhook = Webhook.from_url(setting.EXCEPTION_WEBHOOK, adapter=AsyncWebhookAdapter(session))
+			await webhook.send(error)
 
 
 	result = await take_reaction()
@@ -140,6 +162,9 @@ async def add(client, ctx, member):
 		value = (name, description, hand_in_date, deadline, client_id, "On Hold", "High", estimated_amount)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed for project-registration")
+		await author.send("Thank you for showing interest at Koders.")
+		
+		await EMAIL_TEMPLATE.Email_Project_Registration(email, client_name)
 		mydb.close()
 
 	else:
