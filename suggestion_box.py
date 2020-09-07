@@ -2,6 +2,16 @@ import discord
 from discord.ext import commands
 import mysql.connector
 
+###############################################################################################################
+# MANUAL IMPORT
+###############################################################################################################
+
+import settings as setting
+
+
+###############################################################################################################
+# SUGGESTION
+###############################################################################################################
 
 async def suggestion(ctx, title, description):
 	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
@@ -27,7 +37,11 @@ async def suggestion(ctx, title, description):
 	embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
 	embed.add_field(name='suggestion #{}'.format(number), value=description)
 	await ctx.send(embed=embed)
+	mydb.close()
 
+###############################################################################################################
+# REPLY SUGGESTION
+###############################################################################################################
 
 async def reply_suggestion(ctx, number, is_considered, reason):
 
@@ -71,10 +85,16 @@ async def reply_suggestion(ctx, number, is_considered, reason):
 
 			reply_embed.add_field(name='Reason from {}'.format(ctx.author), value=reason)
 			await ctx.send(embed=reply_embed)
+		mydb.close()
 
 	except Exception as e:
 		await ctx.send("error occured = {}".format(e))
+		mydb.close()
 
+
+###############################################################################################################
+# DISPLAY SUGGESTION
+###############################################################################################################
 
 async def display(ctx, number):
 	try:
@@ -108,9 +128,15 @@ async def display(ctx, number):
 			await ctx.send(embed=embed)
 		else:
 			await ctx.send("The suggesion number does not exit.")
+		mydb.close()
 	except Exception as e:
 		await ctx.send("Command ivoke error occur check your command again.")
+		mydb.close()
 
+
+###############################################################################################################
+# DELETING SUGGESTION
+###############################################################################################################
 
 async def delete_suggestion(ctx, number):
 	try:
@@ -143,8 +169,7 @@ async def delete_suggestion(ctx, number):
 
 
 		await ctx.send("suggestion #{} delete from database".format(number))
+		mydb.close()
 	except Exception as e:
 		await ctx.send("The exception occur while deleting a record.")
-
-
-mydb.close()
+		mydb.close()
