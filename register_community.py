@@ -4,14 +4,18 @@ import re
 import mysql.connector
 import asyncio
 
+###############################################################################################################
 # MANUAL IMPORT
-import email_template as EMAIL_TEMPLATE
+###############################################################################################################
+
+import html_email_template as HTML_TEMPLATE
+import dm_template as DM_TEMPLATE
 
 
 async def add(client, ctx, member):
 
 	# For Database connectivity
-	mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
+	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
 	mycur = mydb.cursor(buffered=True)
 	inputs = []
 
@@ -126,7 +130,6 @@ async def add(client, ctx, member):
 	gender_input = await take_gender()
 
 	inputs.append(gender_input)
-	# await gender_input.delete()
 	await textEmbed.delete()
 
 	# Embed for phone
@@ -227,8 +230,9 @@ async def add(client, ctx, member):
 		value = (name, discord_username, mail, phone, gender, timestamp)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed for community.")
-		await author.send("Thank you for showing interest at Koders.")
-		await EMAIL_TEMPLATE.Email_Community(mail, name)
+		
+		await DM_TEMPLATE.dm_community(author)
+		await HTML_TEMPLATE.Email_Community(mail, name)
 		mydb.close()
 
 	else:
