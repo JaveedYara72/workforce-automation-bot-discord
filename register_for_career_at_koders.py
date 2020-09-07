@@ -5,14 +5,17 @@ import re
 import mysql.connector
 import settings as setting
 
+###############################################################################################################
 # MANUAL IMPORT
-import email_template as EMAIL_TEMPLATE
+###############################################################################################################
 
-# mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
+import html_email_template as HTML_TEMPLATE
+import dm_template as DM_TEMPLATE
+
 
 async def add(client, ctx, member):
 
-	mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
+	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
 	mycur = mydb.cursor(buffered=True)
 	inputs = []
 
@@ -88,7 +91,6 @@ async def add(client, ctx, member):
 
 	def validate_email(email):
 		regex = "^[a-z0-9]+[\\._]?[a-z0-9]+[@]\\w+[.]\\w{2,3}$"
-		# print(re.search(regex, email))
 
 		if re.search(regex, email):
 			return True
@@ -149,7 +151,6 @@ async def add(client, ctx, member):
 	gender_input = await take_gender()
 
 	inputs.append(gender_input)
-	# await gender_input.delete()
 	await textEmbed.delete()
 
 	# Embed for DOB
@@ -271,7 +272,6 @@ async def add(client, ctx, member):
 	embed.add_field(name="Whatsapp", value=inputs[4], inline=False)
 	embed.add_field(name="Email", value=inputs[5], inline=False)
 	embed.add_field(name="Phone", value=inputs[6], inline=False)
-	# embed.add_field(name="Id", value=dict_counter['id'], inline=False)
 	embed.add_field(name="Joined-at", value=timestamp, inline=False)
 
 	text = await ctx.send(embed=embed)
@@ -297,7 +297,6 @@ async def add(client, ctx, member):
 	await text.delete()
 
 	guild = ctx.guild
-	# channel = discord.utils.get(guild.text_channels, name="partner-with-us")
 
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
@@ -306,8 +305,9 @@ async def add(client, ctx, member):
 		value = (name, address, gender, dob, timestamp, email, phone, whatsapp)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed.")
-		await author.send("Thank you for showing interest at Koders.")
-		await EMAIL_TEMPLATE.Email_Career_At_Koders(email, name)
+
+		await DM_TEMPLATE.dm_career(author)
+		await HTML_TEMPLATE.Email_Career_At_Koders(email, name)
 		mydb.close()
 
 	else:
