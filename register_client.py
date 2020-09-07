@@ -5,14 +5,16 @@ import re
 import mysql.connector
 import settings as setting
 
+###############################################################################################################
 # MANUAL IMPORT
+###############################################################################################################
 import email_template as EMAIL_TEMPLATE
+import dm_template as DM_TEMPLATE
 
-# mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
 
 async def add(client, ctx, member):
 
-	mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
+	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
 	mycur = mydb.cursor(buffered=True)
 	inputs = []
 
@@ -238,6 +240,10 @@ async def add(client, ctx, member):
 
 	timestamp = textInput.created_at
 	discord_username = textInput.author
+
+	print(discord_username)
+	print(type(discord_username))
+	
 	author = textInput.author
 	discord_username = str(discord_username)
 
@@ -286,7 +292,6 @@ async def add(client, ctx, member):
 	embed.add_field(name="Email", value=inputs[5], inline=False)
 	embed.add_field(name="Phone", value=inputs[6], inline=False)
 	embed.add_field(name="Notes", value=inputs[7], inline=False)
-	# embed.add_field(name="Id", value=dict_counter['id'], inline=False)
 	embed.add_field(name="Joined-at", value=timestamp, inline=False)
 
 	text = await ctx.send(embed=embed)
@@ -313,8 +318,7 @@ async def add(client, ctx, member):
 	await text.delete()
 
 	guild = ctx.guild
-	# channel = discord.utils.get(guild.text_channels, name="partner-with-us")
-
+	
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
@@ -322,7 +326,8 @@ async def add(client, ctx, member):
 		value = (client_id, name, address, gender, dob, discord_username, email, phone, whatsapp, notes)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed.")
-		await author.send("Thank you for showing interest at Koders.")
+		
+		await DM_TEMPLATE.dm_client(author)
 		mydb.close()
 
 	else:
