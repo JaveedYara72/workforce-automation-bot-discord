@@ -3,13 +3,18 @@ import settings as setting
 import mysql.connector
 from datetime import date
 
+###############################################################################################################
 # MANUAL IMPORT
-import email_template as EMAIL_TEMPLATE
+###############################################################################################################
+
+import dm_template as DM_TEMPLATE
+
+import html_email_template as HTML_TEMPLATE
 
 async def add(client, ctx, member):
 
 	# For Database
-	mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
+	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
 	mycur = mydb.cursor(buffered=True)
 	inputs = []
 
@@ -45,16 +50,10 @@ async def add(client, ctx, member):
 			if (str(reaction.emoji) == '❎'):
 				return False
 
-	def validate_name(name):
-		for letter in name:
-			if letter in "0123456789" or len(name) < 3 or len(name.split()) > 3:
-				return False
-		return True
-
 
 	# Embed for name
 	embed = discord.Embed(title="Hello there! (0/3)",
-    				description="Let's begin your registration.\n\nPlease enter your prject name.")
+    				description="Let's begin your registration.\n\nPlease enter your project name.")
 	embed.set_author(name="Welcome to Koders | Registration",
                      icon_url="https://cdn.discordapp.com/attachments/700257704723087359/709710821382553640/K_with_bg_1.png")
 	embed.set_footer(text="Example\nDiscord bot")
@@ -162,9 +161,10 @@ async def add(client, ctx, member):
 		value = (name, description, hand_in_date, deadline, client_id, "On Hold", "High", estimated_amount)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed for project-registration")
-		await author.send("Thank you for showing interest at Koders.")
+		await DM_TEMPLATE.dm_project(author)
 		
-		await EMAIL_TEMPLATE.Email_Project_Registration(email, client_name)
+		# await EMAIL_TEMPLATE.Email_Project_Registration(email, client_name)
+		await HTML_TEMPLATE.Email_Project_Registration(email, client_name)
 		mydb.close()
 
 	else:
