@@ -2,32 +2,44 @@ import discord
 from discord.ext import commands, tasks
 import time
 import asyncio
-from datetime import datetime
+import datetime
+from datetime import date
 import mysql.connector
 import json
 import requests
 from discord import Webhook, AsyncWebhookAdapter
 import aiohttp
 
+###############################################################################################################
 # MANUAL IMPORTS
+###############################################################################################################
+
 import register_project as REGISTER_PROJECT
 import register_partner as REGISTER_PARTNER
 import register_for_career_at_koders as CAREER_AT_KODERS
 import register_community as REGISTER_COMMUNITY
 import register_client as REGISTER_CLIENT
+import register_task as REGISTER_TASK
+import register_as_koders as REGISTER_AS_KODERS
+import task_done as TASK_DONE
+import show_task as SHOW_TASK
+import task_edit as TASK_EDIT
+import suggestion_box as SUGGESTION_BOX
 import settings as setting
 
 TOKEN = setting.TOKEN
 client = commands.Bot(command_prefix=".")
 
-# mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
 
-mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
+mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
 mycur = mydb.cursor(buffered=True)
 
 count = 0
 
+###############################################################################################################
 # Client Table
+###############################################################################################################
+
 # mycur.execute("""create table client(Id int NOT NULL,
 # 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE',
 # 	Address VARCHAR(100) NOT NULL DEFAULT 'NONE',
@@ -39,7 +51,10 @@ count = 0
 # 	Whatsapp VARCHAR(500) NOT NULL DEFAULT 'NONE',
 # 	Notes VARCHAR(500) NOT NULL DEFAULT 'NONE')""")
 
+###############################################################################################################
 # Partner Table
+###############################################################################################################
+
 # mycur.execute("""create table partner(Partner_Id int NOT NULL AUTO_INCREMENT, 
 # 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE',
 # 	Discord_Username VARCHAR(100) NOT NULL DEFAULT 'NONE',
@@ -52,7 +67,10 @@ count = 0
 # 	Is_Active VARCHAR(500) NOT NULL DEFAULT 'NONE',
 # 	PRIMARY KEY (Partner_Id))""")
 
+###############################################################################################################
 # Community Table
+###############################################################################################################
+
 # mycur.execute("""create table community(Id int NOT NULL AUTO_INCREMENT,
 # 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE',
 # 	Discord_Username VARCHAR(100) NOT NULL DEFAULT 'NONE',
@@ -62,7 +80,10 @@ count = 0
 # 	Joined_At VARCHAR(500) NOT NULL DEFAULT 'NONE',
 # 	PRIMARY KEY (Id))""")
 
+###############################################################################################################
 # Project Table
+###############################################################################################################
+
 # mycur.execute("""create table project(Id int NOT NULL AUTO_INCREMENT, 
 # 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE',
 # 	Description VARCHAR(100) NOT NULL DEFAULT 'NONE',
@@ -77,14 +98,85 @@ count = 0
 # 	Estimated_Amount VARCHAR(500) NOT NULL DEFAULT 'NONE',
 # 	PRIMARY KEY (Id))""")
 
+###############################################################################################################
+# Task Table
+###############################################################################################################
+
+# mycur.execute("""create table task(Id int NOT NULL AUTO_INCREMENT, 
+# 	Title VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	Description VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	Assigned_To VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	Assigned_By VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Status VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Estimated_Time VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Time_Taken VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Estimated_XP int NOT NULL,
+# 	Given_XP int NOT NULL,
+# 	Project_Id varchar(500) NOT NULL DEFAULT 'NONE',
+# 	PRIMARY KEY (Id))""")
+
+###############################################################################################################
+# Internal Table
+###############################################################################################################
+
+# mycur.execute("""create table internal(Internal_Id int NOT NULL AUTO_INCREMENT,
+# 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	Address VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	DOB VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Gender VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Joined_At VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Mail VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Discord_Username VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Phone VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Whatsapp VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Type VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Is_Active VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	Total_XP int NOT NULL,
+# 	Level int NOT NULL,
+# 	Notes VARCHAR(500) NOT NULL DEFAULT 'NONE',
+# 	PRIMARY KEY (Internal_Id))""")
+
+###############################################################################################################
+# Suggestion Table
+###############################################################################################################
+
+# mycur.execute("""create table suggestion(author VARCHAR(100) NOT NULL DEFAULT 'NONE', 
+# 	number int NOT NULL AUTO_INCREMENT, 
+# 	title VARCHAR(100) NOT NULL DEFAULT 'NONE', 
+# 	description VARCHAR(500) NOT NULL DEFAULT 'NONE', 
+# 	reason VARCHAR(500) NOT NULL DEFAULT 'NONE', 
+# 	is_considered int NOT NULL DEFAULT 0, 
+# 	considered_by VARCHAR(100) NOT NULL DEFAULT 'NONE',
+# 	PRIMARY KEY (number))""")
+
+
 def insert(insert_query, value):
 	mycur.execute(insert_query, value)
 	mydb.commit()
 
 
+def update(update_query, value):
+	mycur.execute(update_query, value)
+	mydb.commit()
+
+
+def delete(delete_query, value):
+	mycur.execute(delete_query, value)
+	mydb.commit()
+
+
+###############################################################################################################
+# ON READY
+###############################################################################################################
+
 @client.event
 async def on_ready():
 	print("Bot is ready.")
+
+
+###############################################################################################################
+# CHANNEL CREATION
+###############################################################################################################
 
 @client.command()
 async def create_channel(ctx, *, name):
@@ -97,6 +189,10 @@ async def create_channel(ctx, *, name):
 	)
 	channel = await ctx.guild.create_text_channel(name=name, category=client.get_channel(setting.CHANNEL_ID))
 	await channel.send(embed=embed)
+
+###############################################################################################################
+# ADDING REACTIONS TO MESSAGES
+###############################################################################################################
 
 @client.event
 async def on_raw_reaction_add(payload):
@@ -128,10 +224,12 @@ async def on_raw_reaction_add(payload):
 					return False
 
 
-		# for partner-with-us channel #743395678948032532
-		if message_id == 743395678948032532:
+		###############################################################################################################
+		# for partner-with-us channel 
+		###############################################################################################################
+
+		if message_id == setting.PARTNER_EMBED_ID:
 			count += 1
-			# dict_counter['id'] += 1
 			guild_id = payload.guild_id
 			guild = discord.utils.find(lambda g : g.id==guild_id, client.guilds)
 			member = discord.utils.find(lambda m : m.id == payload.user_id, guild.members)
@@ -160,11 +258,12 @@ async def on_raw_reaction_add(payload):
 				if (result):
 					await channel.delete()
 
+		###############################################################################################################
+		# for career-at-koders channel 
+		###############################################################################################################
 
-		# for career-at-koders channel #743395789061226516
-		if message_id == 743395789061226516:
+		if message_id == setting.CAREER_AT_KODERS_EMBED_ID:
 			count += 1
-			# counter['id'] += 1
 			guild_id = payload.guild_id
 			guild = discord.utils.find(lambda g : g.id==guild_id, client.guilds)
 			member = discord.utils.find(lambda m : m.id == payload.user_id, guild.members)
@@ -181,7 +280,6 @@ async def on_raw_reaction_add(payload):
 				text = await channel.send(embed=embed)
 
 				await text.add_reaction(emoji="☑")
-				# await text.add_reaction(emoji="❎")
 
 				ctx = channel
 
@@ -193,8 +291,12 @@ async def on_raw_reaction_add(payload):
 				if (result):
 					await channel.delete()
 
-		# for community-member channel #743395901657317416
-		if message_id == 743395901657317416:
+
+		###############################################################################################################
+		# for community-member channel 
+		###############################################################################################################
+
+		if message_id == setting.COMMUNITY_EMBED_ID:
 			count += 1
 			guild_id = payload.guild_id
 			guild = discord.utils.find(lambda g : g.id==guild_id, client.guilds)
@@ -212,7 +314,6 @@ async def on_raw_reaction_add(payload):
 				text = await channel.send(embed=embed)
 
 				await text.add_reaction(emoji="☑")
-				# await text.add_reaction(emoji="❎")
 
 				ctx = channel
 
@@ -225,9 +326,11 @@ async def on_raw_reaction_add(payload):
 					await channel.delete()
 
 
+		###############################################################################################################
+		# for project-registration channel 
+		###############################################################################################################
 
-		# for project-registration channel #743396000932036650
-		if message_id == 743396000932036650:
+		if message_id == setting.PROJECT_REGISTRATION_EMBED_ID:
 			count += 1
 			guild_id = payload.guild_id
 			guild = discord.utils.find(lambda g : g.id==guild_id, client.guilds)
@@ -245,7 +348,6 @@ async def on_raw_reaction_add(payload):
 				text = await channel.send(embed=embed)
 
 				await text.add_reaction(emoji="☑")
-				# await text.add_reaction(emoji="❎")
 
 				ctx = channel
 
@@ -257,10 +359,13 @@ async def on_raw_reaction_add(payload):
 				if (result):
 					await channel.delete()
 
-		# for client-registration channel #747779843608805387
-		if message_id == 747779843608805387:
+		###############################################################################################################
+		# for client-registration channel 
+		###############################################################################################################
+
+		if message_id == setting.CLIENT_REGISTRATION_EMBED_ID:
 			count += 1
-			# counter['id'] += 1
+			
 			guild_id = payload.guild_id
 			guild = discord.utils.find(lambda g : g.id==guild_id, client.guilds)
 			member = discord.utils.find(lambda m : m.id == payload.user_id, guild.members)
@@ -277,7 +382,6 @@ async def on_raw_reaction_add(payload):
 				text = await channel.send(embed=embed)
 
 				await text.add_reaction(emoji="☑")
-				# await text.add_reaction(emoji="❎")
 
 				ctx = channel
 
@@ -300,16 +404,9 @@ async def on_raw_reaction_add(payload):
 			await webhook.send(embed=embed)
 
 
-@client.command()
-async def register(ctx):
-	await REGISTER_MEMBER.add(client, ctx)
-
-
-
-@client.command()
-async def project_registration(ctx):
-	await REGISTER_PROJECT.add(client, ctx)
-
+###############################################################################################################
+# POLL COMMAND
+###############################################################################################################
 
 @client.command()
 async def poll(ctx, question, *options: str):
@@ -335,6 +432,9 @@ async def poll(ctx, question, *options: str):
 		await react_message.add_reaction(reaction)
 
 
+###############################################################################################################
+# MEME COMMAND
+###############################################################################################################
 
 @client.command()
 async def meme(ctx):
@@ -348,6 +448,9 @@ async def meme(ctx):
 		print(error)
 		await ctx.send(error)
 
+###############################################################################################################
+# MESSAGE LOGS
+###############################################################################################################
 
 @client.event
 async def on_message_delete(message):
@@ -373,6 +476,11 @@ async def on_message_delete(message):
 				webhook = Webhook.from_url(setting.EXCEPTION_WEBHOOK, adapter=AsyncWebhookAdapter(session))
 				await webhook.send(error)
 
+
+###############################################################################################################
+# EXCEPTION LOGS
+###############################################################################################################
+
 @client.event
 async def on_command_error(ctx, error):
 	async with aiohttp.ClientSession() as session:
@@ -393,5 +501,118 @@ async def on_command_error(ctx, error):
 
 		raise error
 
+
+###############################################################################################################
+# REGISTER TASK
+###############################################################################################################
+
+@client.command()
+async def task(ctx):
+	await REGISTER_TASK.add(client, ctx)
+
+@client.command()
+async def task_done(ctx, task_id: int):
+	await TASK_DONE.add(client, ctx, task_id)
+
+
+@client.command()
+async def show_task(ctx, assigned_to, status):
+	await SHOW_TASK.add(client, ctx, assigned_to, status)
+
+
+@client.command()
+async def task_edit(ctx, task_id: int):
+	await TASK_EDIT.add(client, ctx, task_id)
+
+
+###############################################################################################################
+# REGISTER AS KODERS
+###############################################################################################################
+
+@client.command()
+async def internal(ctx):
+	await REGISTER_AS_KODERS.add(client, ctx)
+
+
+###############################################################################################################
+# LEVEL SYSTEM
+###############################################################################################################
+
+@client.command()
+async def level(ctx, member: discord.Member):
+	
+	user_id = member.id
+	user_id = f"<@!{user_id}>"
+	
+	user = str(member)
+	try:
+		mycur.execute("select Level from internal where Discord_Username = %s", (user_id, ))
+		row = mycur.fetchone()
+		level = row[0]
+		await ctx.send("The level of {} is {}".format(member.mention, level))
+	except Exception as error:
+		await ctx.send("You are not registered as Koders.")
+
+
+###############################################################################################################
+# BIRTHDAY REMINDER
+###############################################################################################################
+
+async def check_for_birthday():
+
+	await client.wait_until_ready()
+	now = datetime.datetime.now()
+	curmonth = now.month
+	curday = now.day
+
+	while not client.is_closed():
+		channel = client.get_channel(setting.BIRTHDAY_ID)
+
+		mycur.execute("select * from client")
+		rows = mycur.fetchall()
+		for row in rows:
+			id_ = row[0]
+			name = row[1]
+			address = row[2]
+			gender = row[3]
+			dob = row[4]
+			discord_username = row[5]
+
+
+			dob = dob.split('/')
+			day = dob[0]
+			month = dob[1]
+
+			if int(day) == int(curday):
+				if int(month) == int(curmonth):
+					await channel.send(f"Today is {discord_username} birthday.Happy birthday {discord_username} 🥳🥳🍕🍕")
+
+
+		await asyncio.sleep(86400)
+
+
+###############################################################################################################
+# 	SUGGESTION BOX
+###############################################################################################################
+
+@client.command()
+async def suggestion(ctx, title, description):
+	await SUGGESTION_BOX.suggestion(ctx, title, description)
+
+@client.command()
+async def reply_suggestion(ctx, number: int, is_considered: int, reason):
+	await SUGGESTION_BOX.reply_suggestion(ctx, number, is_considered, reason)
+
+@client.command()
+async def display(ctx, number: int):
+	await SUGGESTION_BOX.display(ctx, number)
+
+@client.command()
+async def delete_suggestion(ctx, number: int):
+	await SUGGESTION_BOX.delete_suggestion(ctx, number)
+
+
+
+client.loop.create_task(check_for_birthday())
+client.run(TOKEN) 
 mydb.close()
-client.run(TOKEN)
