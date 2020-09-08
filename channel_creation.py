@@ -14,16 +14,8 @@ import aiohttp
 # MANUAL IMPORTS
 ###############################################################################################################
 
-import register_project as REGISTER_PROJECT
-import register_partner as REGISTER_PARTNER
-import register_for_career_at_koders as CAREER_AT_KODERS
-import register_community as REGISTER_COMMUNITY
-import register_client as REGISTER_CLIENT
-import register_task as REGISTER_TASK
-import register_as_koders as REGISTER_AS_KODERS
-import task_done as TASK_DONE
-import show_task as SHOW_TASK
-import task_edit as TASK_EDIT
+import register as REGISTER
+import task as TASK
 import suggestion_box as SUGGESTION_BOX
 import settings as setting
 
@@ -179,6 +171,7 @@ async def on_ready():
 ###############################################################################################################
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def create_channel(ctx, *, name):
 	guild = ctx.guild
 	member = ctx.message.author
@@ -250,7 +243,7 @@ async def on_raw_reaction_add(payload):
 
 				ctx = channel
 
-				await REGISTER_PARTNER.add(client, ctx, member)
+				await REGISTER.add_partner(client, ctx, member)
 
 
 				result = await take_reaction()
@@ -283,7 +276,7 @@ async def on_raw_reaction_add(payload):
 
 				ctx = channel
 
-				await CAREER_AT_KODERS.add(client, ctx, member)
+				await REGISTER.add_career_at_koders(client, ctx, member)
 
 
 				result = await take_reaction()
@@ -317,7 +310,7 @@ async def on_raw_reaction_add(payload):
 
 				ctx = channel
 
-				await REGISTER_COMMUNITY.add(client, ctx, member)
+				await REGISTER.add_community(client, ctx, member)
 
 
 				result = await take_reaction()
@@ -351,7 +344,7 @@ async def on_raw_reaction_add(payload):
 
 				ctx = channel
 
-				await REGISTER_PROJECT.add(client, ctx, member)
+				await REGISTER.add_project(client, ctx, member)
 
 
 				result = await take_reaction()
@@ -385,7 +378,8 @@ async def on_raw_reaction_add(payload):
 
 				ctx = channel
 
-				await REGISTER_CLIENT.add(client, ctx, member)
+				# await REGISTER_CLIENT.add(client, ctx, member)
+				await REGISTER.add_client(client, ctx, member)
 
 
 				result = await take_reaction()
@@ -404,11 +398,23 @@ async def on_raw_reaction_add(payload):
 			await webhook.send(embed=embed)
 
 
+
+###############################################################################################################
+# REGISTER AS KODERS
+###############################################################################################################
+
+@client.command()
+@commands.has_any_role('@everyone')
+async def internal(ctx):
+	await REGISTER.add_member(client, ctx)
+
+
 ###############################################################################################################
 # POLL COMMAND
 ###############################################################################################################
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def poll(ctx, question, *options: str):
 	embed = discord.Embed(
 		title = question,
@@ -437,6 +443,7 @@ async def poll(ctx, question, *options: str):
 ###############################################################################################################
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def meme(ctx):
 	try:
 		response = requests.get('https://meme-api.herokuapp.com/gimme')
@@ -507,31 +514,27 @@ async def on_command_error(ctx, error):
 ###############################################################################################################
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def task(ctx):
-	await REGISTER_TASK.add(client, ctx)
+	await TASK.add_task(client, ctx)
+
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def task_done(ctx, task_id: int):
-	await TASK_DONE.add(client, ctx, task_id)
+	await TASK.task_done(client, ctx, task_id)
 
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def show_task(ctx, assigned_to, status):
-	await SHOW_TASK.add(client, ctx, assigned_to, status)
+	await TASK.show_task(client, ctx, assigned_to, status)
 
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def task_edit(ctx, task_id: int):
-	await TASK_EDIT.add(client, ctx, task_id)
-
-
-###############################################################################################################
-# REGISTER AS KODERS
-###############################################################################################################
-
-@client.command()
-async def internal(ctx):
-	await REGISTER_AS_KODERS.add(client, ctx)
+	await TASK.task_edit(client, ctx, task_id)
 
 
 ###############################################################################################################
@@ -539,6 +542,7 @@ async def internal(ctx):
 ###############################################################################################################
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def level(ctx, member: discord.Member):
 	
 	user_id = member.id
@@ -596,20 +600,25 @@ async def check_for_birthday():
 ###############################################################################################################
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def suggestion(ctx, title, description):
-	await SUGGESTION_BOX.suggestion(ctx, title, description)
+	await SUGGESTION_BOX.suggestion(client, ctx, title, description)
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def reply_suggestion(ctx, number: int, is_considered: int, reason):
-	await SUGGESTION_BOX.reply_suggestion(ctx, number, is_considered, reason)
+	await SUGGESTION_BOX.reply_suggestion(client, ctx, number, is_considered, reason)
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def display(ctx, number: int):
-	await SUGGESTION_BOX.display(ctx, number)
+	await SUGGESTION_BOX.display(client, ctx, number)
+
 
 @client.command()
+@commands.has_any_role('@everyone')
 async def delete_suggestion(ctx, number: int):
-	await SUGGESTION_BOX.delete_suggestion(ctx, number)
+	await SUGGESTION_BOX.delete_suggestion(client, ctx, number)
 
 
 
