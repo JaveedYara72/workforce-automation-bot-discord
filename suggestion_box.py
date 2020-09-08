@@ -13,7 +13,7 @@ import settings as setting
 # SUGGESTION
 ###############################################################################################################
 
-async def suggestion(ctx, title, description):
+async def suggestion(client, ctx, title, description):
 	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
 	mycur = mydb.cursor(buffered=True)
 
@@ -36,14 +36,18 @@ async def suggestion(ctx, title, description):
 
 	embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
 	embed.add_field(name='suggestion #{}'.format(number), value=description)
+	embed.set_footer(text="Made by Koders Dev")
 	await ctx.send(embed=embed)
+
+	channel = client.get_channel(setting.SUGGESTIONS)
+	await channel.send(embed=embed)
 	mydb.close()
 
 ###############################################################################################################
 # REPLY SUGGESTION
 ###############################################################################################################
 
-async def reply_suggestion(ctx, number, is_considered, reason):
+async def reply_suggestion(client, ctx, number, is_considered, reason):
 
 	try:
 		mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
@@ -59,7 +63,7 @@ async def reply_suggestion(ctx, number, is_considered, reason):
 		description = row[1]
 		title = row[2]
 
-		reply_embed = discord.Embed(title=title, colour = discord.Colour.blue())
+		embed = discord.Embed(title=title, colour = discord.Colour.blue())
 		username = ctx.message.author.name
 
 		if is_considered == 1:
@@ -68,11 +72,14 @@ async def reply_suggestion(ctx, number, is_considered, reason):
 			update(update_query, value)
 
 
-			reply_embed.set_author(name=author)
-			reply_embed.add_field(name='suggestion #{} considered'.format(number), value=description, inline=False)
-			
-			reply_embed.add_field(name='Reason from {}'.format(ctx.author), value=reason, inline=False)
-			await ctx.send(embed=reply_embed)
+			embed.set_author(name=author)
+			embed.add_field(name='suggestion #{} considered'.format(number), value=description, inline=False)
+			embed.add_field(name='Reason from {}'.format(ctx.author), value=reason, inline=False)
+			embed.set_footer(text="Made by Koders Dev")
+			await ctx.send(embed=embed)
+
+			channel = client.get_channel(setting.CONSIDERED_SUGGESTIONS)
+			await channel.send(embed=embed)
 
 		elif is_considered == 2:
 			update_query = "update suggestion set reason = %s, is_considered = %s, considered_by = %s where number = %s"
@@ -80,11 +87,15 @@ async def reply_suggestion(ctx, number, is_considered, reason):
 			update(update_query, value)
 
 
-			reply_embed.set_author(name=author)
-			reply_embed.add_field(name='suggestion #{} not considered'.format(number), value=description, inline=False)		
+			embed.set_author(name=author)
+			embed.add_field(name='suggestion #{} not considered'.format(number), value=description, inline=False)
+			embed.add_field(name='Reason from {}'.format(ctx.author), value=reason)
+			embed.set_footer(text="Made by Koders Dev")
+			await ctx.send(embed=embed)
 
-			reply_embed.add_field(name='Reason from {}'.format(ctx.author), value=reason)
-			await ctx.send(embed=reply_embed)
+			channel = client.get_channel(setting.SUGGESTIONS)
+			await channel.send(embed=embed)
+
 		mydb.close()
 
 	except Exception as e:
@@ -96,7 +107,7 @@ async def reply_suggestion(ctx, number, is_considered, reason):
 # DISPLAY SUGGESTION
 ###############################################################################################################
 
-async def display(ctx, number):
+async def display(client, ctx, number):
 	try:
 		mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
 		mycur = mydb.cursor(buffered=True)
@@ -115,17 +126,23 @@ async def display(ctx, number):
 		if is_considered == 0:
 			embed.set_author(name=author)
 			embed.add_field(name='suggestion #{}'.format(number), value=description, inline=False)
+			embed.set_footer(text="Made by Koders Dev")
 			await ctx.send(embed=embed)
+
 		elif is_considered == 1:
 			embed.set_author(name=author)
 			embed.add_field(name='suggestion #{} considered'.format(number), value=description, inline=False)
 			embed.add_field(name='Reason from {}'.format(considered_by), value=reason)
+			embed.set_footer(text="Made by Koders Dev")
 			await ctx.send(embed=embed)
+
 		elif is_considered == 2:
 			embed.set_author(name=author)
 			embed.add_field(name='suggestion #{} not considered'.format(number), value=description, inline=False)
 			embed.add_field(name='Reason from {}'.format(considered_by), value=reason)
+			embed.set_footer(text="Made by Koders Dev")
 			await ctx.send(embed=embed)
+
 		else:
 			await ctx.send("The suggesion number does not exit.")
 		mydb.close()
@@ -138,7 +155,7 @@ async def display(ctx, number):
 # DELETING SUGGESTION
 ###############################################################################################################
 
-async def delete_suggestion(ctx, number):
+async def delete_suggestion(client, ctx, number):
 	try:
 		mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
 		mycur = mydb.cursor(buffered=True)
@@ -161,6 +178,7 @@ async def delete_suggestion(ctx, number):
 			embed.set_author(name=author)
 			embed.add_field(name='suggestion #{} not considered'.format(number), value=description, inline=False)
 			embed.add_field(name='Reason from {}'.format(considered_by), value=reason)
+			embed.set_footer(text="Made by Koders Dev")
 			await ctx.send(embed=embed)
 
 		delete_query = "delete from suggestion where number = %s"
@@ -168,7 +186,7 @@ async def delete_suggestion(ctx, number):
 		delete(delete_query, value)
 
 
-		await ctx.send("suggestion #{} delete from database".format(number))
+		await ctx.send("suggestion #{} deleted from database".format(number))
 		mydb.close()
 	except Exception as e:
 		await ctx.send("The exception occur while deleting a record.")
