@@ -4,142 +4,176 @@ import time
 import asyncio
 import datetime
 from datetime import date
-import mysql.connector
 import json
 import requests
 from discord import Webhook, AsyncWebhookAdapter
 import aiohttp
+import sqlite3
+
 
 ###############################################################################################################
 # MANUAL IMPORTS
 ###############################################################################################################
-
 import register as REGISTER
 import task as TASK
 import suggestion_box as SUGGESTION_BOX
 import settings as setting
 
+
 TOKEN = setting.TOKEN
 client = commands.Bot(command_prefix=".")
 
-
-mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-mycur = mydb.cursor(buffered=True)
-
 count = 0
+
+###############################################################################################################
+# DATABASE CONNECTION
+###############################################################################################################
+db_file = "demo.db"
+try:
+	mydb = sqlite3.connect(db_file)
+	mycur = mydb.cursor()
+except Exception as e:
+	print(e)
+
 
 ###############################################################################################################
 # Client Table
 ###############################################################################################################
 
-# mycur.execute("""create table client(Id int NOT NULL,
-# 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Address VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Gender VARCHAR(100) NOT NULL DEFAULT 'NONE', 
-# 	DOB VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Discord_Username VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Mail VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Phone VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Whatsapp VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Notes VARCHAR(500) NOT NULL DEFAULT 'NONE')""")
+mycur.execute("""create table if not exists client(Id integer NOT NULL,
+	Name text NOT NULL DEFAULT 'NONE',
+	Address text NOT NULL DEFAULT 'NONE',
+	Gender text NOT NULL DEFAULT 'NONE', 
+	DOB text NOT NULL DEFAULT 'NONE',
+	Discord_Username text NOT NULL DEFAULT 'NONE',
+	Mail text NOT NULL DEFAULT 'NONE',
+	Phone text NOT NULL DEFAULT 'NONE',
+	Whatsapp text NOT NULL DEFAULT 'NONE',
+	Notes text NOT NULL DEFAULT 'NONE')""")
 
 ###############################################################################################################
 # Partner Table
 ###############################################################################################################
 
-# mycur.execute("""create table partner(Partner_Id int NOT NULL AUTO_INCREMENT, 
-# 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Discord_Username VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Address VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Mail VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Phone VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Gender VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Joined_At VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Reference VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Is_Active VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	PRIMARY KEY (Partner_Id))""")
+mycur.execute("""create table if not exists partner(Partner_Id integer PRIMARY KEY AUTOINCREMENT, 
+	Name text NOT NULL DEFAULT 'NONE',
+	Discord_Username text NOT NULL DEFAULT 'NONE',
+	Address text NOT NULL DEFAULT 'NONE',
+	Mail text NOT NULL DEFAULT 'NONE',
+	Phone text NOT NULL DEFAULT 'NONE',
+	Gender text NOT NULL DEFAULT 'NONE',
+	Joined_At text NOT NULL DEFAULT 'NONE',
+	Reference text NOT NULL DEFAULT 'NONE',
+	Is_Active text NOT NULL DEFAULT 'NONE'
+	)""")
 
 ###############################################################################################################
 # Community Table
 ###############################################################################################################
 
-# mycur.execute("""create table community(Id int NOT NULL AUTO_INCREMENT,
-# 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Discord_Username VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Mail VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Phone VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Gender VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Joined_At VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	PRIMARY KEY (Id))""")
+mycur.execute("""create table if not exists community(Id integer PRIMARY KEY AUTOINCREMENT,
+	Name text NOT NULL DEFAULT 'NONE',
+	Discord_Username text NOT NULL DEFAULT 'NONE',
+	Mail text NOT NULL DEFAULT 'NONE',
+	Phone text NOT NULL DEFAULT 'NONE',
+	Gender text NOT NULL DEFAULT 'NONE',
+	Joined_At text NOT NULL DEFAULT 'NONE'
+	)""")
 
 ###############################################################################################################
 # Project Table
 ###############################################################################################################
 
-# mycur.execute("""create table project(Id int NOT NULL AUTO_INCREMENT, 
-# 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Description VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Hand_In_Date VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Deadline VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Hand_Out_Date VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Client_Id VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Amount_Id VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Type VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Status VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Priority VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Estimated_Amount VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	PRIMARY KEY (Id))""")
+mycur.execute("""create table if not exists project(Id integer PRIMARY KEY AUTOINCREMENT, 
+	Name text NOT NULL DEFAULT 'NONE',
+	Description text NOT NULL DEFAULT 'NONE',
+	Hand_In_Date text NOT NULL DEFAULT 'NONE',
+	Deadline text NOT NULL DEFAULT 'NONE',
+	Hand_Out_Date text NOT NULL DEFAULT 'NONE',
+	Client_Id text NOT NULL DEFAULT 'NONE',
+	Amount_Id text NOT NULL DEFAULT 'NONE',
+	Type text NOT NULL DEFAULT 'NONE',
+	Status text NOT NULL DEFAULT 'NONE',
+	Priority text NOT NULL DEFAULT 'NONE',
+	Estimated_Amount text NOT NULL DEFAULT 'NONE'
+	)""")
 
 ###############################################################################################################
 # Task Table
 ###############################################################################################################
 
-# mycur.execute("""create table task(Id int NOT NULL AUTO_INCREMENT, 
-# 	Title VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Description VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Assigned_To VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Assigned_By VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Status VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Estimated_Time VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Time_Taken VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Estimated_XP int NOT NULL,
-# 	Given_XP int NOT NULL,
-# 	Project_Id varchar(500) NOT NULL DEFAULT 'NONE',
-# 	PRIMARY KEY (Id))""")
+mycur.execute("""create table if not exists task(Id integer PRIMARY KEY AUTOINCREMENT, 
+	Title text NOT NULL DEFAULT 'NONE',
+	Description text NOT NULL DEFAULT 'NONE',
+	Assigned_To text NOT NULL DEFAULT 'NONE',
+	Assigned_By text NOT NULL DEFAULT 'NONE',
+	Status text NOT NULL DEFAULT 'NONE',
+	Estimated_Time text NOT NULL DEFAULT 'NONE',
+	Time_Taken text NOT NULL DEFAULT 'NONE',
+	Estimated_XP integer NOT NULL DEFAULT 0,
+	Given_XP integer NOT NULL DEFAULT 0,
+	Project_Id text NOT NULL DEFAULT 'NONE'
+	)""")
 
 ###############################################################################################################
 # Internal Table
 ###############################################################################################################
 
-# mycur.execute("""create table internal(Internal_Id int NOT NULL AUTO_INCREMENT,
-# 	Name VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	Address VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	DOB VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Gender VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Joined_At VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Mail VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Discord_Username VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Phone VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Whatsapp VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Type VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Is_Active VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	Total_XP int NOT NULL,
-# 	Level int NOT NULL,
-# 	Notes VARCHAR(500) NOT NULL DEFAULT 'NONE',
-# 	PRIMARY KEY (Internal_Id))""")
+mycur.execute("""create table if not exists internal(Internal_Id integer PRIMARY KEY AUTOINCREMENT,
+	Name text NOT NULL DEFAULT 'NONE',
+	Address text NOT NULL DEFAULT 'NONE',
+	DOB text NOT NULL DEFAULT 'NONE',
+	Gender text NOT NULL DEFAULT 'NONE',
+	Joined_At text NOT NULL DEFAULT 'NONE',
+	Mail text NOT NULL DEFAULT 'NONE',
+	Discord_Username text NOT NULL DEFAULT 'NONE',
+	Phone text NOT NULL DEFAULT 'NONE',
+	Whatsapp text NOT NULL DEFAULT 'NONE',
+	Type text NOT NULL DEFAULT 'NONE',
+	Is_Active text NOT NULL DEFAULT 'NONE',
+	Total_XP integer NOT NULL DEFAULT 0,
+	Level integer NOT NULL DEFAULT 0,
+	Notes text NOT NULL DEFAULT 'NONE'
+	)""")
 
 ###############################################################################################################
 # Suggestion Table
 ###############################################################################################################
 
-# mycur.execute("""create table suggestion(author VARCHAR(100) NOT NULL DEFAULT 'NONE', 
-# 	number int NOT NULL AUTO_INCREMENT, 
-# 	title VARCHAR(100) NOT NULL DEFAULT 'NONE', 
-# 	description VARCHAR(500) NOT NULL DEFAULT 'NONE', 
-# 	reason VARCHAR(500) NOT NULL DEFAULT 'NONE', 
-# 	is_considered int NOT NULL DEFAULT 0, 
-# 	considered_by VARCHAR(100) NOT NULL DEFAULT 'NONE',
-# 	PRIMARY KEY (number))""")
+mycur.execute("""create table if not exists suggestion(author text NOT NULL DEFAULT 'NONE', 
+	number integer PRIMARY KEY AUTOINCREMENT, 
+	title text NOT NULL DEFAULT 'NONE', 
+	description text NOT NULL DEFAULT 'NONE', 
+	reason text NOT NULL DEFAULT 'NONE', 
+	is_considered integer NOT NULL DEFAULT 0, 
+	considered_by text NOT NULL DEFAULT 'NONE'
+	)""")
+
+###############################################################################################################
+# Career At Koders
+###############################################################################################################
+mycur.execute("""create table if not exists career_at_koders(Id integer PRIMARY KEY AUTOINCREMENT,
+  Name text NOT NULL DEFAULT 'NONE',
+  Address text NOT NULL DEFAULT 'NONE',
+  Gender text NOT NULL DEFAULT 'NONE',
+  DOB text NOT NULL DEFAULT 'NONE',
+  Joined_At text NOT NULL DEFAULT 'NONE',
+  Mail text NOT NULL DEFAULT 'NONE',
+  Phone text NOT NULL DEFAULT 'NONE',
+  Whatsapp text NOT NULL DEFAULT 'NONE'
+  )""")
+
+
+# mycur.execute("drop table client")
+# mycur.execute("drop table partner")
+# mycur.execute("drop table community")
+# mycur.execute("drop table project")
+# mycur.execute("drop table task")
+# mycur.execute("drop table internal")
+# mycur.execute("drop table suggestion")
+# mycur.execute("drop table employee")
+# mycur.execute("drop table career_at_koders")
+mydb.commit()
 
 
 def insert(insert_query, value):
@@ -378,7 +412,6 @@ async def on_raw_reaction_add(payload):
 
 				ctx = channel
 
-				# await REGISTER_CLIENT.add(client, ctx, member)
 				await REGISTER.add_client(client, ctx, member)
 
 
@@ -494,17 +527,17 @@ async def on_command_error(ctx, error):
 		webhook = Webhook.from_url(setting.EXCEPTION_WEBHOOK, adapter=AsyncWebhookAdapter(session))
 
 		if isinstance(error, commands.CheckFailure):
-			await webhook.send("You do not have the permission to do that.")
+			await webhook.send(error)
 		elif isinstance(error, commands.CommandNotFound):
 			await webhook.send(error)
 		elif isinstance(error, commands.ExpectedClosingQuoteError):
-			await webhook.send("Quote character is expected.")
+			await webhook.send(error)
 		elif isinstance(error, commands.TooManyArguments):
-			await webhook.send("Too many arguments used in invoking command. Check the number of arguments.")
+			await webhook.send(error)
 		elif isinstance(error, commands.UserInputError):
-			await webhook.send("Error occured while user enter some input")
+			await webhook.send(error)
 		elif isinstance(error, commands.InvalidEndOfQuotedStringError):
-			await webhook.send("invalid end of wuoted string while invoking command.")
+			await webhook.send(error)
 
 		raise error
 
@@ -550,7 +583,7 @@ async def level(ctx, member: discord.Member):
 	
 	user = str(member)
 	try:
-		mycur.execute("select Level from internal where Discord_Username = %s", (user_id, ))
+		mycur.execute("select Level from internal where Discord_Username = ?", (user_id, ))
 		row = mycur.fetchone()
 		level = row[0]
 		await ctx.send("The level of {} is {}".format(member.mention, level))
@@ -572,15 +605,15 @@ async def check_for_birthday():
 	while not client.is_closed():
 		channel = client.get_channel(setting.BIRTHDAY_ID)
 
-		mycur.execute("select * from client")
+		mycur.execute("select * from internal")
 		rows = mycur.fetchall()
 		for row in rows:
-			id_ = row[0]
+			internal_id = row[0]
 			name = row[1]
 			address = row[2]
-			gender = row[3]
-			dob = row[4]
-			discord_username = row[5]
+			dob = row[3]
+			gender = row[4]
+			discord_username = row[7]
 
 
 			dob = dob.split('/')
