@@ -2,19 +2,43 @@ import discord
 import asyncio
 import datetime
 import re
-import mysql.connector
 import settings as setting
+import sqlite3
 
 
 ###############################################################################################################
 # MANUAL IMPORT
 ###############################################################################################################
-
-import email_template as EMAIL_TEMPLATE
 import leveling_system as LEVEL_SYSTEM
 import deadline_cross_reminder as DEADLINE
 
 
+###############################################################################################################
+# DATABASE CONNECTION
+###############################################################################################################
+db_file = "demo.db"
+try:
+	mydb = sqlite3.connect(db_file)
+	mycur = mydb.cursor()
+except Exception as e:
+	print(e)
+
+###############################################################################################################
+# DATABASE QUERIES
+###############################################################################################################
+def insert(insert_query, value):
+	mycur.execute(insert_query, value)
+	mydb.commit()
+
+
+def update(update_query, value):
+	mycur.execute(update_query, value)
+	mydb.commit()
+
+
+###############################################################################################################
+# VALIDATION FUNCTION
+###############################################################################################################
 def validate_hour(hour):
 	for number in hour:
 		if number not in "0123456789":
@@ -22,21 +46,11 @@ def validate_hour(hour):
 	return True
 
 
+###############################################################################################################
+# GIVE TASK
+###############################################################################################################
 async def add_task(client, ctx):
-
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
 	inputs = []
-
-	def insert(insert_query, value):
-		mycur.execute(insert_query, value)
-		mydb.commit()
-
-
-	def update(update_query, value):
-		mycur.execute(update_query, value)
-		mydb.commit()
-
 	
 	def pred(m):
 		return m.author == ctx.author and m.channel == ctx.channel
@@ -219,7 +233,7 @@ async def add_task(client, ctx):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
-		insert_query = "insert into task(Title, Description, Assigned_To, Estimated_XP, Estimated_Time, Project_Id, Assigned_By, Status) values(%s, %s, %s, %s, %s, %s, %s, %s)"
+		insert_query = "insert into task(Title, Description, Assigned_To, Estimated_XP, Estimated_Time, Project_Id, Assigned_By, Status) values(?, ?, ?, ?, ?, ?, ?, ?)"
 		value = (title, description, assigned_to, estimated_xp, estimated_time, project_id, discord_username, "In_Progress")
 		insert(insert_query, value)
 
@@ -255,23 +269,18 @@ async def add_task(client, ctx):
 
 		await asyncio.sleep(time*60*60)
 
-		await DEADLINE.add(ctx, task_id)
+		await DEADLINE.add_deadline(ctx, task_id)
 
 		#---------------------------------------
-		mydb.close()
 
 	else:
 		await ctx.send("Registeration failed. Ask a Koder for registration")
-		mydb.close()
 
 
 
 async def show_task(client, ctx, assigned_to, status):
-
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
 	
-	mycur.execute("select * from task where Assigned_To = %s and Status = %s", (assigned_to, status))
+	mycur.execute("select * from task where Assigned_To = ? and Status = ?", (assigned_to, status))
 	result = mycur.fetchall()
 
 	for row in result:
@@ -306,20 +315,7 @@ async def show_task(client, ctx, assigned_to, status):
 
 
 async def task_done(client, ctx, task_id):
-
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
 	inputs = []
-
-	def insert(insert_query, value):
-		mycur.execute(insert_query, value)
-		mydb.commit()
-
-
-	def update(update_query, value):
-		mycur.execute(update_query, value)
-		mydb.commit()
-
 	
 	def pred(m):
 		return m.author == ctx.author and m.channel == ctx.channel
@@ -456,11 +452,11 @@ async def task_done(client, ctx, task_id):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
-		insert_query = "update task set Time_Taken = %s, Given_XP = %s, Status = %s where Id = %s"
+		insert_query = "update task set Time_Taken = ?, Given_XP = ?, Status = ? where Id = ?"
 		value = (time_taken, given_xp, status, task_id)
 		insert(insert_query, value)
 
-		mycur.execute("select * from task where id = %s", (task_id, ))
+		mycur.execute("select * from task where id = ?", (task_id, ))
 		row = mycur.fetchone()
 		title = row[1]
 		description = row[2]
@@ -499,12 +495,9 @@ async def task_done(client, ctx, task_id):
 
 
 async def task_edit(client, ctx, task_id):
-
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
 	inputs = []
 
-	mycur.execute("select * from task where Id = %s", (task_id, ))
+	mycur.execute("select * from task where Id = ?", (task_id, ))
 	row = mycur.fetchone()
 	title = row[1]
 	description = row[2]
@@ -523,16 +516,6 @@ async def task_edit(client, ctx, task_id):
 	embed.add_field(name="Estimated_XP", value=estimated_xp, inline=True)
 
 	text = await ctx.send(embed=embed)
-
-
-	def insert(insert_query, value):
-		mycur.execute(insert_query, value)
-		mydb.commit()
-
-
-	def update(update_query, value):
-		mycur.execute(update_query, value)
-		mydb.commit()
 
 	
 	def pred(m):
@@ -712,15 +695,15 @@ async def task_edit(client, ctx, task_id):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
-		update_query = "update task set Title = %s, Description = %s, Assigned_To = %s, Estimated_XP = %s, Estimated_Time = %s, Status = %s where Id = %s"
+		update_query = "update task set Title = ?, Description = ?, Assigned_To = ?, Estimated_XP = ?, Estimated_Time = ?, Status = ? where Id = ?"
 		value = (title, description, assigned_to, estimated_xp, estimated_time, status, task_id)
 		update(update_query, value)
 
 		await ctx.send("The task with id {} has been edited succesfully.".format(task_id))
 
-		task_edit_channel = client.get_channel(setting.TASK_EIDT_CHANNEL_ID)
+		task_edit_channel = client.get_channel(setting.TASK_EDIT_CHANNEL_ID)
 
-		mycur.execute("select * from task where Id = %s", (task_id, ))
+		mycur.execute("select * from task where Id = ?", (task_id, ))
 		row = mycur.fetchone()
 		title = row[1]
 		description = row[2]
@@ -740,3 +723,4 @@ async def task_edit(client, ctx, task_id):
 		embed.set_footer(text="Made by Koders Dev")
 
 		text = await task_edit_channel.send(embed=embed)
+
