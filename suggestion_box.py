@@ -1,30 +1,50 @@
 import discord
 from discord.ext import commands
-import mysql.connector
+import sqlite3
 
 ###############################################################################################################
 # MANUAL IMPORT
 ###############################################################################################################
-
 import settings as setting
+
+
+###############################################################################################################
+# DATABASE CONNECTION
+###############################################################################################################
+db_file = "demo.db"
+try:
+	mydb = sqlite3.connect(db_file)
+	mycur = mydb.cursor()
+except Exception as e:
+	print(e)
+
+
+###############################################################################################################
+# DATABASE QUERIES
+###############################################################################################################
+def insert(insert_query, value):
+	mycur.execute(insert_query, value)
+	mydb.commit()
+
+def update(update_query, value):
+	mycur.execute(update_query, value)
+	mydb.commit()
+
+def delete(delete_query, value):
+	mycur.execute(delete_query, value)
+	mydb.commit()
+
 
 
 ###############################################################################################################
 # SUGGESTION
 ###############################################################################################################
-
 async def suggestion(client, ctx, title, description):
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
-
-	def insert(insert_query, value):
-		mycur.execute(insert_query, value)
-		mydb.commit()
 
 	embed = discord.Embed(title=title, colour = discord.Colour.blue())
 
 	username = ctx.message.author.name
-	insert_query = "insert into suggestion(author, title, description) values(%s, %s, %s)"
+	insert_query = "insert into suggestion(author, title, description) values(?, ?, ?)"
 	value = (username, title, description)
 
 	insert(insert_query, value)
@@ -41,23 +61,16 @@ async def suggestion(client, ctx, title, description):
 
 	channel = client.get_channel(setting.SUGGESTIONS)
 	await channel.send(embed=embed)
-	mydb.close()
+
+
 
 ###############################################################################################################
 # REPLY SUGGESTION
 ###############################################################################################################
-
 async def reply_suggestion(client, ctx, number, is_considered, reason):
 
 	try:
-		mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
-		mycur = mydb.cursor(buffered=True)
-
-		def update(update_query, value):
-			mycur.execute(update_query, value)
-			mydb.commit()
-
-		mycur.execute("select author, description, title from suggestion where number = %s", (number, ))
+		mycur.execute("select author, description, title from suggestion where number = ?", (number, ))
 		row = mycur.fetchone()
 		author = row[0]
 		description = row[1]
@@ -67,7 +80,7 @@ async def reply_suggestion(client, ctx, number, is_considered, reason):
 		username = ctx.message.author.name
 
 		if is_considered == 1:
-			update_query = "update suggestion set reason = %s, is_considered = %s, considered_by = %s where number = %s"
+			update_query = "update suggestion set reason = ?, is_considered = ?, considered_by = ? where number = ?"
 			value = (reason, is_considered, username, number)
 			update(update_query, value)
 
@@ -82,7 +95,7 @@ async def reply_suggestion(client, ctx, number, is_considered, reason):
 			await channel.send(embed=embed)
 
 		elif is_considered == 2:
-			update_query = "update suggestion set reason = %s, is_considered = %s, considered_by = %s where number = %s"
+			update_query = "update suggestion set reason = ?, is_considered = ?, considered_by = ? where number = ?"
 			value = (reason, is_considered, username, number)
 			update(update_query, value)
 
@@ -95,12 +108,11 @@ async def reply_suggestion(client, ctx, number, is_considered, reason):
 
 			channel = client.get_channel(setting.SUGGESTIONS)
 			await channel.send(embed=embed)
-
-		mydb.close()
+	
 
 	except Exception as e:
 		await ctx.send("error occured = {}".format(e))
-		mydb.close()
+	
 
 
 ###############################################################################################################
@@ -109,10 +121,7 @@ async def reply_suggestion(client, ctx, number, is_considered, reason):
 
 async def display(client, ctx, number):
 	try:
-		mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
-		mycur = mydb.cursor(buffered=True)
-		
-		mycur.execute("select * from suggestion where number = %s", (number, ))
+		mycur.execute("select * from suggestion where number = ?", (number, ))
 		row = mycur.fetchone()
 		author = row[0]
 		number = row[1]
@@ -145,10 +154,10 @@ async def display(client, ctx, number):
 
 		else:
 			await ctx.send("The suggesion number does not exit.")
-		mydb.close()
+	
 	except Exception as e:
 		await ctx.send("Command ivoke error occur check your command again.")
-		mydb.close()
+	
 
 
 ###############################################################################################################
@@ -157,14 +166,7 @@ async def display(client, ctx, number):
 
 async def delete_suggestion(client, ctx, number):
 	try:
-		mydb = mysql.connector.connect(host="localhost", user="root", password="", database="ticket")
-		mycur = mydb.cursor(buffered=True)
-
-		def delete(delete_query, value):
-			mycur.execute(delete_query, value)
-			mydb.commit()
-		
-		mycur.execute("select * from suggestion where number = %s", (number, ))
+		mycur.execute("select * from suggestion where number = ?", (number, ))
 		row = mycur.fetchone()
 		author = row[0]
 		number = row[1]
@@ -181,13 +183,13 @@ async def delete_suggestion(client, ctx, number):
 			embed.set_footer(text="Made by Koders Dev")
 			await ctx.send(embed=embed)
 
-		delete_query = "delete from suggestion where number = %s"
+		delete_query = "delete from suggestion where number = ?"
 		value = (number, )
 		delete(delete_query, value)
 
 
 		await ctx.send("suggestion #{} deleted from database".format(number))
-		mydb.close()
+	
 	except Exception as e:
 		await ctx.send("The exception occur while deleting a record.")
-		mydb.close()
+
