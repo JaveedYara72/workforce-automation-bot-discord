@@ -1,8 +1,9 @@
 import discord
-import smtplib, ssl
+from jinja2 import Environment, FileSystemLoader
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from jinja2 import Environment, FileSystemLoader
+import smtplib, ssl
+from smtplib import SMTP 
 
 
 # Manual Import
@@ -22,8 +23,7 @@ async def Email_Project_Registration(reciever_email, name):
 	message["From"] = CREDENTIALS.sender_email
 	message["To"] = reciever_email
 
-	template = env.get_template('project_registration.html')
-
+	template = env.get_template('project_registration.txt')
 	text = template.render(name = name)
 
 	part1 = MIMEText(text,'html')
@@ -95,7 +95,7 @@ async def Email_Career_At_Koders(reciever_email, name):
 	message["From"] = CREDENTIALS.sender_email
 	message["To"] = reciever_email
 
-	template = env.get_template('carrer.txt')
+	template = env.get_template('career.txt')
 
 	text = template.render(name = name)
 
