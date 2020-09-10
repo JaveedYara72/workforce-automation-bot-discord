@@ -2,8 +2,10 @@ import discord
 import asyncio
 import datetime
 import re
-import mysql.connector
+import aiohttp
 import settings as setting
+import sqlite3
+from discord import Webhook, AsyncWebhookAdapter
 
 ###############################################################################################################
 # MANUAL IMPORT
@@ -15,7 +17,30 @@ import leveling_system as LEVEL_SYSTEM
 import dm_template as DM_TEMPLATE
 import deadline_cross_reminder as DEADLINE
 
+###############################################################################################################
+# DATABASE CONNECTION
+###############################################################################################################
+db_file = "demo.db"
+try:
+	mydb = sqlite3.connect(db_file)
+	mycur = mydb.cursor()
+except Exception as e:
+	print(e)
 
+
+
+###############################################################################################################
+# DATABASE QUERIES
+###############################################################################################################
+def insert(insert_query, value):
+	mycur.execute(insert_query, value)
+	mydb.commit()
+
+
+
+###############################################################################################################
+# VALIDATION FUNCTIONS
+###############################################################################################################
 def validate_name(name):
 	for letter in name:
 		if letter in "0123456789" or len(name) < 3 or len(name.split()) > 3:
@@ -48,16 +73,13 @@ def validate_email(email):
 
 
 
-async def add_member(client, ctx):
+###############################################################################################################
+# ADD MEMBER
+###############################################################################################################
 
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
+async def add_member(client, ctx):
 	inputs = []
 
-	def insert(insert_query, value):
-		mycur.execute(insert_query, value)
-		mydb.commit()
-	
 	def pred(m):
 		return m.author == ctx.author and m.channel == ctx.channel
 
@@ -333,29 +355,27 @@ async def add_member(client, ctx):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
-		insert_query = "insert into internal(Name, Address, Gender, DOB, Discord_Username, Mail, Phone, Whatsapp, Notes, Joined_At, Is_Active) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+		insert_query = "insert into internal(Name, Address, Gender, DOB, Discord_Username, Mail, Phone, Whatsapp, Notes, Joined_At, Is_Active) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 		user_id = f"<@!{user_id}>"
 		value = (name, address, gender, dob, user_id, email, phone, whatsapp, notes, timestamp, "True")
 		insert(insert_query, value)
 		await ctx.send("Registration Completed.")
 		
-		await DM_TEMPLATE.dm_koders(author) 
-		mydb.close()
+		await DM_TEMPLATE.dm_koders(author)
+
 
 	else:
 		await ctx.send("Registeration failed. Ask a Koder for registration")
-		mydb.close()
+		
 
+
+
+###############################################################################################################
+# ADD CLIENT
+###############################################################################################################
 
 async def add_client(client, ctx, member):
-
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
 	inputs = []
-
-	def insert(insert_query, value):
-		mycur.execute(insert_query, value)
-		mydb.commit()
 	
 	def pred(m):
 		return m.author == member and m.channel == ctx
@@ -631,29 +651,26 @@ async def add_client(client, ctx, member):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
-		insert_query = "insert into client(Id, Name, Address, Gender, DOB, Discord_Username, Mail, Phone, Whatsapp, Notes) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+		insert_query = "insert into client(Id, Name, Address, Gender, DOB, Discord_Username, Mail, Phone, Whatsapp, Notes) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 		value = (client_id, name, address, gender, dob, discord_username, email, phone, whatsapp, notes)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed.")
 		
 		await DM_TEMPLATE.dm_client(author)
-		mydb.close()
+		
 
 	else:
 		await ctx.send("Registeration failed. Ask a Koder for registration")
-		mydb.close()
+		
 
+
+
+###############################################################################################################
+# ADD COMMUNITY
+###############################################################################################################
 
 async def add_community(client, ctx, member):
-
-	# For Database connectivity
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
 	inputs = []
-
-	def insert(insert_query, value):
-		mycur.execute(insert_query, value)
-		mydb.commit()
 	
 	def pred(m):
 		return m.author == member and m.channel == ctx
@@ -840,29 +857,27 @@ async def add_community(client, ctx, member):
 
 	if (result):
 
-		insert_query = "insert into community(Name, Discord_Username, Mail, Phone, Gender, Joined_At) values(%s, %s, %s, %s, %s, %s)"
+		insert_query = "insert into community(Name, Discord_Username, Mail, Phone, Gender, Joined_At) values(?, ?, ?, ?, ?, ?)"
 		value = (name, discord_username, mail, phone, gender, timestamp)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed for community.")
 		
 		await DM_TEMPLATE.dm_community(author)
 		await HTML_TEMPLATE.Email_Community(mail, name)
-		mydb.close()
+		
 
 	else:
 		await ctx.send("Registeration failed. Ask a Koder for registration")
-		mydb.close()
+		
 
+
+
+###############################################################################################################
+# ADD CAREER AT KODERS
+###############################################################################################################
 
 async def add_career_at_koders(client, ctx, member):
-
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
 	inputs = []
-
-	def insert(insert_query, value):
-		mycur.execute(insert_query, value)
-		mydb.commit()
 	
 	def pred(m):
 		return m.author == member and m.channel == ctx
@@ -1118,30 +1133,28 @@ async def add_career_at_koders(client, ctx, member):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
-		insert_query = "insert into career_at_koders(Name, Address, Gender, DOB, Joined_At, Mail, Phone, Whatsapp) values(%s, %s, %s, %s, %s, %s, %s, %s)"
+		insert_query = "insert into career_at_koders(Name, Address, Gender, DOB, Joined_At, Mail, Phone, Whatsapp) values(?, ?, ?, ?, ?, ?, ?, ?)"
 		value = (name, address, gender, dob, timestamp, email, phone, whatsapp)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed.")
 
 		await DM_TEMPLATE.dm_career(author)
 		await HTML_TEMPLATE.Email_Career_At_Koders(email, name)
-		mydb.close()
+		
 
 	else:
 		await ctx.send("Registeration failed. Ask a Koder for registration")
-		mydb.close()
+		
 
+
+
+###############################################################################################################
+# ADD PARTNER
+###############################################################################################################
 
 async def add_partner(client, ctx, member):
-
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
 	inputs = []
 
-	def insert(insert_query, value):
-		mycur.execute(insert_query, value)
-		mydb.commit()
-	
 	def pred(m):
 		return m.author == member and m.channel == ctx
 
@@ -1361,28 +1374,25 @@ async def add_partner(client, ctx, member):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
-		insert_query = "insert into partner(Name, Discord_Username, Address, Mail, Phone, Gender, Joined_At, Reference, Is_Active) values(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+		insert_query = "insert into partner(Name, Discord_Username, Address, Mail, Phone, Gender, Joined_At, Reference, Is_Active) values(?, ?, ?, ?, ?, ?, ?, ?, ?)"
 		value = (name, discord_username, address, email, phone, gender, timestamp, reference, "True")
 		insert(insert_query, value)
 		await ctx.send("Registration Completed.")
 		await DM_TEMPLATE.dm_partner(author)
-		mydb.close()
+		
 
 	else:
 		await ctx.send("Registeration failed. Ask a Koder for registration")
-		mydb.close()
+		
 
+
+
+###############################################################################################################
+# ADD PROJECT
+###############################################################################################################
 
 async def add_project(client, ctx, member):
-
-	# For Database
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
 	inputs = []
-
-	def insert(insert_query, value):
-		mycur.execute(insert_query, value)
-		mydb.commit()
 	
 	def pred(m):
 		return m.author == member and m.channel == ctx
@@ -1496,12 +1506,12 @@ async def add_project(client, ctx, member):
 	estimated_amount = inputs[2]
 	deadline = inputs[3]
 
-	hand_in_date = date.today()
+	hand_in_date = datetime.date.today()
 
 
 	# This part needs to be handled by try except clause
 	try:
-		mycur.execute("select Id, Mail, Name from client where Discord_Username = %s", (discord_username, ))
+		mycur.execute("select Id, Mail, Name from client where Discord_Username = ?", (discord_username, ))
 		row = mycur.fetchone()
 
 		if row:
@@ -1525,16 +1535,18 @@ async def add_project(client, ctx, member):
 	channel = discord.utils.find(lambda c : c.id==message.channel.id, guild.channels)
 
 	if (result):
-		insert_query = "insert into project(Name, Description, Hand_In_Date, Deadline, Client_Id, Status, Priority, Estimated_Amount) values(%s, %s, %s, %s, %s, %s, %s, %s)"
+		insert_query = "insert into project(Name, Description, Hand_In_Date, Deadline, Client_Id, Status, Priority, Estimated_Amount) values(?, ?, ?, ?, ?, ?, ?, ?)"
 		value = (name, description, hand_in_date, deadline, client_id, "On Hold", "High", estimated_amount)
 		insert(insert_query, value)
 		await ctx.send("Registration Completed for project-registration")
 		await DM_TEMPLATE.dm_project(author)
 		
-		# await EMAIL_TEMPLATE.Email_Project_Registration(email, client_name)
 		await HTML_TEMPLATE.Email_Project_Registration(email, client_name)
-		mydb.close()
 
 	else:
 		await ctx.send("Registeration failed. Ask a Koder for registration")
-		mydb.close()
+		
+
+
+
+###############################################################################################################
