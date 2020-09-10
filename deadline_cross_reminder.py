@@ -1,24 +1,33 @@
 import discord
-import mysql.connector
 import settings as setting
 import asyncio
+import sqlite3
 
 ###############################################################################################################
 # MANUAL IMPORT
 ###############################################################################################################
 
-import email_template as EMAIL_TEMPLATE
 import leveling_system as LEVEL_SYSTEM
 import dm_template as DM_TEMPLATE
 
 
-async def add(ctx, task_id):
+###############################################################################################################
+# DATABASE CONNECTION
+###############################################################################################################
+db_file = "demo.db"
+try:
+	mydb = sqlite3.connect(db_file)
+	mycur = mydb.cursor()
+except Exception as e:
+	print(e)
 
-	mydb = mysql.connector.connect(host=setting.HOST, port=setting.PORT, database=setting.DATABASE, user=setting.USER, password=setting.PASSWORD)
-	mycur = mydb.cursor(buffered=True)
 
+###############################################################################################################
+# DEADLINE CROSS REMINDER
+###############################################################################################################
+async def add_deadline(ctx, task_id):
 
-	mycur.execute("select * from task where Id = %s", (task_id, ))
+	mycur.execute("select * from task where Id = ?", (task_id, ))
 	row = mycur.fetchone()
 	task_id = row[0]
 	title = row[1]
@@ -43,6 +52,7 @@ async def add(ctx, task_id):
 		embed.add_field(name="Estimated_Time", value=estimated_time, inline=True)
 		embed.add_field(name="Estimated_XP", value=estimated_xp, inline=True)
 		embed.add_field(name="Project_Id", value=project_id, inline=True)
+		embed.set_footer(text="Made by Koders Dev")
 		await ctx.send(embed=embed)
 
 
