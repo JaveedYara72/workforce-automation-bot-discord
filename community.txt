@@ -1,0 +1,18 @@
+<html>
+<head>
+<title></title>
+</head>
+<body>
+<p>
+Hello Koder {{name}},
+More than a community, Koders is a family. A family of passionate individuals that don't only Kode, but also develop a pristine relationship with the people who are part of our Koding Family. {{name}} We welcome you to a community full of vibrance and fruition. 
+Just to give you a brief overview, we suggest you that please go through our <community guidelines>(link to redirect). We strictly abide by them to ensure our family is prosperous and heading towards mutual development. 
+We wish you loads of learning, new experiences, and rest assured, there are a bunch of beautiful humans here to connect with. 
+With utmost compassion. <br>
+Keep Koding, Keep growing <br> 
+Regards, <br>
+Team Koders 
+
+</p>
+</body>
+</html>

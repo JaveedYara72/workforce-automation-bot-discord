@@ -1,0 +1,17 @@
+<html>
+<head>
+<title></title>
+</head>
+<body>
+<p>
+Hello Koder {{name}},
+Hope we didn't make you wait long. We're extremely apologetic if a delay arose. 
+It gives us immense pleasure Mr.{{name}} to convey that after an extensive review of your project by our Kore Team, your project {{project_name}}, has been selected. 
+One of our representatives will get in touch with you for further advancements. 
+Congratulations! {{project_name}} is going to be lit. Hold tight as we develop your dream project and turn it into a reality. 
+Keep Koding, Keep growing<br>
+Regards,<br>
+Team Koders.
+</p>
+</body>
+</html>

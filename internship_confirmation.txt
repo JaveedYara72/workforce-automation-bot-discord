@@ -1,0 +1,16 @@
+<html>
+<head>
+<title></title>
+</head>
+<body>
+<p>
+Hello, Dear Koder {{name}},
+PFA the appointment letter below. Yes, you have heard it right. We see a lot of potential in you. To mold your potential and channelize it in the right direction, Koders is all that you need. The offer details have been enclosed in the document attached below and we hope that you revert with your decision soon. Koders is waiting to help you sharpen your saw and to ensure that we mutually benefit from each other. Get ready as we introduce you to a work culture that is unmatched. Get ready to become a part of our family which is considerate and will ensure that your fruition is done to its zenith. 
+Wishing you an experience you've never had before with the perfect balance of work ethic, compassion, and self-development. <br>
+Keep Koding, Keep growing.<br>
+<b>Regards,</b><br>
+<b>Team Koders</b> <br>
+Mentoring you to your full potential.
+</p>
+</body>
+</html>
