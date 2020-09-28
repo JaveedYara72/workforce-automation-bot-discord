@@ -1,45 +1,63 @@
-#################################################################################################################
-# FOR REGISTERATION
+# FOR REGISTRATION
+TOKEN = "NzM1Nzk5MjM2NjE2MTI2NTA1.Xxlgsw.0W6qF1ibc0F3tTtCWs4qdalHI1Q" # cypher
+prefix = "."
+debug = True
+verbose = True
+
+GENERAL_CHANNEL = 676375821379829771
+MUTED_ROLE = 756760558849753138
 ################################################################################################################
-
-TOKEN = "NzMzMjUzOTg4ODAzMjgwOTQ2.XxAd_g.vaNDVuOaapejDzCOyDnb0bws0Zs" 
-PREFIX = '&'
-VERSION = '0.1.0'
-CHANNEL_ID = 742716000650264607 
-TICKET_CHANNEL_ID = 742722032382509167
-PROJECT_ID = 743395996003991622
-CAREER_ID = 743395784460075071
-PARTNER_ID = 743395673545769021
-COMMUNITY_ID = 743395897173344336
-
-BIRTHDAY_ID = 751064249325060107
-TASK_UPDATES_CHANNEL_ID = 749977444676665354
-ACCEPTED_TASK_CHANNEL_ID = 750230418326028299
-TASK_EDIT_CHANNEL_ID = 752495183697936395
+# CATEGORY CHANNEL ID
+################################################################################################################
+CHANNEL_ID = 756037066206216272
+TICKET_CHANNEL_ID = 756048496410493009
 
 ################################################################################################################
-# FOR DATABASE CONNECTION
+# WORK LOGGED ID
 ################################################################################################################
+WORK_LOGGED = 756037992136573019
+EFFICIENCY_MANAGEMENT = 756037626082885658
 
-HOST = "localhost"
-DATABASE = "ticket"
-USER = "root"
-PASSWORD = ""
-PORT = 3306
+
+################################################################################################################
+# BIRTHDAY REMINDER
+################################################################################################################
+BIRTHDAY_ID = 756038333083287592
+
+
+################################################################################################################
+# TASK ID
+################################################################################################################
+TASK_UPDATES_CHANNEL_ID = 756038412418416730
+ACCEPTED_TASK_CHANNEL_ID = 756038516781088868
+TASK_EDIT_CHANNEL_ID = 756038453304623104
 
 
 ################################################################################################################
 # FOR SENDING MESSAGE LOGS AND EXCEPTION LOGS
 ################################################################################################################
-MESSAGE_WEBHOOK = "https://discordapp.com/api/webhooks/745592902322749500/_o5cCah0cxsh53lPTIXJfrujo5w4kTGmy41WdeEr43wz0nUFPkMxLNUrjDE-wM_4pgpC"
-EXCEPTION_WEBHOOK = "https://discordapp.com/api/webhooks/745646282504405142/xd6Xcbc16I5is6TKc6XSFvAjt9pkEK2HboOogKFWq1w3WbpTpFISdvryfKtYHkrdQZcs"
+MESSAGE_WEBHOOK = "https://discordapp.com/api/webhooks/756047750591938620/k1qlGciKRkAEo-rR7J9TyOrosJ4NJsJxHO_zI2A1gb14fzSpMXscHDC7_EGkNhYXqt_B"
+EXCEPTION_WEBHOOK = "https://discordapp.com/api/webhooks/756047543875403806/CrdM1Qg7cYT_xPoV1kTR8T5WMLcQlnJ8jMEqNVpcI8LGXfFthwQ11KcBcxvNQejFZ9QK"
 
 
 ################################################################################################################
 # MESSAGE ID 
 ################################################################################################################
-PARTNER_EMBED_ID = 743395678948032532
-CAREER_AT_KODERS_EMBED_ID = 743395789061226516
-COMMUNITY_EMBED_ID = 743395901657317416
-PROJECT_REGISTRATION_EMBED_ID = 743396000932036650
-CLIENT_REGISTRATION_EMBED_ID = 747779843608805387
+PARTNER_EMBED_ID = 756061914576191570
+CAREER_AT_KODERS_EMBED_ID = 756062933385216032
+COMMUNITY_EMBED_ID = 756063014465044562
+PROJECT_REGISTRATION_EMBED_ID = 756063157801189416
+CLIENT_REGISTRATION_EMBED_ID = 756063189820768318
+
+
+################################################################################################################
+# SUGGESTION BOX
+################################################################################################################
+SUGGESTIONS = 756038225436344420
+CONSIDERED_SUGGESTIONS = 756038284404326461
+
+
+################################################################################################################
+# BAD WORD CHANNEL ID
+################################################################################################################
+BAD_WORD_CHANNEL = 756037761944911872

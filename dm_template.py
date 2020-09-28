@@ -17,6 +17,3 @@ async def dm_partner(author):
 
 async def dm_project(author):
 	await author.send("Thank you for showing interest at Koders. Your project has been registerd.")
-
-async def dm_task(author):
-	await author.send("Thank you for showing interest at Koders.")
