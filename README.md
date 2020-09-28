@@ -18,6 +18,17 @@
   <a href="https://blog.getbootstrap.com/">Instagram</a>
 </p>
 
+# Introduction
+This is the offical repo of discord bot of Koders.
+
+[![Generic badge](https://img.shields.io/static/v1?label=Language&message=python&color=yellow)](https://shields.io/)
+ [![Support Server](https://img.shields.io/discord/591914197219016707.svg?color=7289da&label=Koders&logo=discord&style=flat-square)](https://discord.gg/hGS24JC)
+[![Discord badge](https://img.shields.io/static/v1?label=Depends&message=discord-py&color=blue)](https://shields.io/)
+ [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+
+ [![ForTheBadge powered-by-electricity](http://ForTheBadge.com/images/badges/powered-by-electricity.svg)](http://ForTheBadge.com)
+
+
 ## Table of content
 
 - [Details](#project-details)
