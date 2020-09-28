@@ -19,9 +19,8 @@ import task as TASK
 import suggestion_box as SUGGESTION_BOX
 import settings as setting
 
-
 TOKEN = setting.TOKEN
-client = commands.Bot(command_prefix=".")
+client = commands.Bot(command_prefix=setting.PREFIX)
 
 count = 0
 
@@ -197,7 +196,7 @@ def delete(delete_query, value):
 
 @client.event
 async def on_ready():
-	print("Bot is ready.")
+    print("Kourage is running at "+setting.VERSION)
 
 
 ###############################################################################################################
@@ -205,7 +204,7 @@ async def on_ready():
 ###############################################################################################################
 
 @client.command()
-@commands.has_any_role('@everyone')
+@commands.has_any_role('@Kore')
 async def create_channel(ctx, *, name):
 	guild = ctx.guild
 	member = ctx.message.author
@@ -638,7 +637,7 @@ async def suggestion(ctx, title, description):
 	await SUGGESTION_BOX.suggestion(client, ctx, title, description)
 
 @client.command()
-@commands.has_any_role('@everyone')
+@commands.has_any_role('@Kore')
 async def reply_suggestion(ctx, number: int, is_considered: int, reason):
 	await SUGGESTION_BOX.reply_suggestion(client, ctx, number, is_considered, reason)
 
@@ -649,11 +648,9 @@ async def display(ctx, number: int):
 
 
 @client.command()
-@commands.has_any_role('@everyone')
+@commands.has_any_role('@Kore')
 async def delete_suggestion(ctx, number: int):
 	await SUGGESTION_BOX.delete_suggestion(client, ctx, number)
-
-
 
 client.loop.create_task(check_for_birthday())
 client.run(TOKEN) 
