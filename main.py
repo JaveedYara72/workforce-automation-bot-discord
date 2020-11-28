@@ -16,6 +16,7 @@ async def on_ready(): # Triggers when bot is ready
     logging.info("Kourage is running at version {0}".format(CONFIG.VERSION))
 
 @bot.command()
+@commands.has_any_role("@everyone")
 async def ping(msg):
     await msg.send('Pong! 🏓\n ' + 
               'Name: Kourage \n ' +
