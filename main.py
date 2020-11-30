@@ -27,6 +27,7 @@ async def ping(msg):
               'Username: {0} \n '.format(msg.author.name) +
               'Latency: {0} sec '.format(round(bot.latency, 1)))
 
+# Vision command
 @bot.command()
 @commands.has_any_role("Kore")
 async def vision(msg):
