@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands, tasks
 import asyncio
 
-# LOGGING WITH FORMAT
+# Logging format
 import logging
 logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
 
@@ -51,8 +51,22 @@ async def remind(ctx, *args):
     msg = await ctx.send(args[2])
     await msg.delete()
 
-
-
+# Poll command
+@bot.command()
+@commands.has_any_role('Koders')
+async def poll(ctx, question, *options: str):
+    embed = discord.Embed(
+            title = question, 
+            color = discord.Colour.blue()
+            )
+    reactions = [ '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣' ]
+    description = []
+    for x, option in enumerate(options):
+        description += '\n {} {} \n'.format(reactions[x], option)
+    embed = discord.Embed(title=question, description=''.join(description))
+    react_message = await ctx.send(embed=embed)
+    for reaction in reactions[:len(options)]:
+        await react_message.add_reaction(reaction)
 
 if __name__ == "__main__":
     try:
