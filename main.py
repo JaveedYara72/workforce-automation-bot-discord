@@ -10,7 +10,7 @@ logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
 import config as CONFIG # Capitals for global
 import embeds as EMBEDS 
 
-bot = commands.Bot(command_prefix="~")
+bot = commands.Bot(command_prefix="&")
 
 @bot.event
 async def on_ready(): # Triggers when bot is ready
@@ -48,6 +48,11 @@ async def remind(ctx, *args):
     embed.add_field(name="Invoked for ", value="{0}".format(args[2]), inline=True)
     embed.set_footer(text="Made with ❤️️  by Koders")
     await ctx.send(embed=embed)
+    msg = await ctx.send(args[2])
+    await msg.delete()
+
+
+
 
 if __name__ == "__main__":
     try:
