@@ -41,15 +41,14 @@ async def remind(ctx, *args):
     await ctx.message.delete()
     await asyncio.sleep(float(args[0]) * 60 * 60)
     author = ctx.author.name
-    embed = discord.Embed(title="{0}".format(args[1]), color=0x2459bc)
-    embed.set_author(name="Auto Reminder!")
+    embed = discord.Embed(title="Hello there! You have a reminder ^_^", color=0x57b28f)
+    embed.add_field(name="Don't forget to:", value="{0}".format(args[1]), inline=False)
+    embed.add_field(name="By yours truly :sunflower:", value="Cypher", inline=False)
     embed.set_thumbnail(url="https://www.flaticon.com/svg/static/icons/svg/2919/2919780.svg")
-    embed.add_field(name="Invoked by ", value="{0}".format(author), inline=True)
-    embed.add_field(name="Invoked for ", value="{0}".format(args[2]), inline=True)
     embed.set_footer(text="Made with ❤️️  by Koders")
     await ctx.send(embed=embed)
     msg = await ctx.send(args[2])
-    await msg.delete()
+    # await msg.delete() # Deletes @person message
 
 # Poll command
 @bot.command()
