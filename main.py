@@ -10,7 +10,7 @@ logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
 import config as CONFIG # Capitals for global
 import embeds as EMBEDS 
 
-bot = commands.Bot(command_prefix="&")
+bot = commands.Bot(command_prefix="~")
 
 @bot.event
 async def on_ready(): # Triggers when bot is ready
@@ -43,12 +43,12 @@ async def remind(ctx, *args):
     author = ctx.author.name
     embed = discord.Embed(title="Hello there! You have a reminder ^_^", color=0x57b28f)
     embed.add_field(name="Don't forget to:", value="{0}".format(args[1]), inline=False)
-    embed.add_field(name="By yours truly :sunflower:", value="Cypher", inline=False)
+    embed.add_field(name="By yours truly :sunflower:", value="Kourage", inline=False)
     embed.set_thumbnail(url="https://www.flaticon.com/svg/static/icons/svg/2919/2919780.svg")
     embed.set_footer(text="Made with ❤️️  by Koders")
     await ctx.send(embed=embed)
     msg = await ctx.send(args[2])
-    # await msg.delete() # Deletes @person message
+    await msg.delete() # Deletes @person message who got tagged
 
 # Poll command
 @bot.command()
