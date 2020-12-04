@@ -43,7 +43,7 @@ async def remind(ctx, *args):
     author = ctx.author.name
     embed = discord.Embed(title="Hello there! You have a reminder ^_^", color=0x57b28f)
     embed.add_field(name="Don't forget to:", value="{0}".format(args[1]), inline=False)
-    embed.add_field(name="By yours truly :sunflower:", value="Kourage", inline=False)
+    embed.add_field(name="By yours truly :ghost:", value="Kourage", inline=False)
     embed.set_thumbnail(url="https://www.flaticon.com/svg/static/icons/svg/2919/2919780.svg")
     embed.set_footer(text="Made with ❤️️  by Koders")
     await ctx.send(embed=embed)
