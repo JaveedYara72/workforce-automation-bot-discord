@@ -27,33 +27,75 @@ async def ping(msg):
               'Username: {0} \n '.format(msg.author.name) +
               'Latency: {0} sec '.format(round(bot.latency, 1)))
 
+# Define command
+@bot.command()
+@commands.has_any_role("Koders")
+async def define(msg, *args):
+    import requests
+    import json
+    
+    # API REQUEST
+    word = args[0]
+    url = 'https://owlbot.info/api/v4/dictionary/' + str(word)
+    headers = { "Authorization": "Token c5a6932805bff0c739cd87d45dd8530d88c064bd" }
+    try:
+        response = requests.get(url, headers=headers)
+    except Exception as e:
+        print("Something went wrong during requesting API. Reason: " + str(e))
+
+    # JSON PARSE WITH EMBED
+    data = json.loads(response.text)
+    try:
+        # print(len(data['definitions']))
+        # print(data['definitions'])
+        for i in range(0, len(data['definitions'])):
+            embed=discord.Embed(title="Koolz! Here is my analysis ^_^", color=0x57b28f)
+            embed.set_author(name="Kourage Word Analyzer", url="https://www.github.com/koders-in/kourage",
+            icon_url=bot.user.avatar_url) 
+            if data['definitions'][i]['image_url'] is not None:
+                embed.set_thumbnail(url=data['definitions'][i]['image_url'])
+            embed.add_field(name="Type", value=data['definitions'][i]['type'], inline=True)
+
+            if data['definitions'][i]['emoji'] is not None:
+                data['definitions'][i]['emoji'] = "N/A"
+            embed.add_field(name="Emoji", value=data['definitions'][i]['emoji'], inline=True)
+            embed.add_field(name="Meaning", value=data['definitions'][i]['definition'], inline=False)
+            embed.add_field(name="Example", value=data['definitions'][i]['example'], inline=False)
+            embed.set_footer(text="Made with :heart:  by Koders")
+            await msg.send(embed=embed)
+    except Exception as e:
+        print("Something went wrong during parsing JSON. Reason: " + str(e))
+
+
 # Vision command
 @bot.command()
 @commands.has_any_role("Kore")
 async def vision(msg):
+    await msg.message.delete()
     embed = EMBEDS.vision()
     await msg.send(embed=embed)
 
 # Remind command
 @bot.command()
 @commands.has_any_role("Koders")
-async def remind(ctx, *args):
-    await ctx.message.delete()
+async def remind(msg, *args):
+    await msg.message.delete()
     await asyncio.sleep(float(args[0]) * 60 * 60)
-    author = ctx.author.name
+    author = msg.author.name
     embed = discord.Embed(title="Hello there! You have a reminder ^_^", color=0x57b28f)
     embed.add_field(name="Don't forget to:", value="{0}".format(args[1]), inline=False)
     embed.add_field(name="By yours truly :ghost:", value="Kourage", inline=False)
     embed.set_thumbnail(url="https://www.flaticon.com/svg/static/icons/svg/2919/2919780.svg")
     embed.set_footer(text="Made with ❤️️  by Koders")
-    await ctx.send(embed=embed)
-    msg = await ctx.send(args[2])
+    await msg.send(embed=embed)
+    msg = await msg.send(args[2])
     await msg.delete() # Deletes @person message who got tagged
 
 # Poll command
 @bot.command()
 @commands.has_any_role('Koders')
-async def poll(ctx, question, *options: str):
+async def poll(msg, question, *options: str):
+    await msg.message.delete()
     embed=discord.Embed(title="Hello there! Please vote. ^_^", description=question, color=0x54ab8a)
     embed.set_author(name="Koders")
     reactions = [ '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣' ]
@@ -61,7 +103,7 @@ async def poll(ctx, question, *options: str):
     for x, option in enumerate(options):
         embed.add_field(name=reactions[x], value=option, inline=True)
     embed.set_footer(text="Made with ❤️️  by Koders")
-    react_message = await ctx.send(embed=embed)
+    react_message = await msg.send(embed=embed)
     for reaction in reactions[:len(options)]:
         await react_message.add_reaction(reaction)
 
