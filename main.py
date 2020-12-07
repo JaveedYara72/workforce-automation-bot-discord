@@ -51,9 +51,6 @@ async def define(msg, *args):
             if data['definitions'][i]['image_url'] is not None:
                 embed.set_thumbnail(url=data['definitions'][i]['image_url'])
             embed.add_field(name="Type", value=data['definitions'][i]['type'], inline=True)
-            if data['definitions'][i]['emoji'] is None:
-                data['definitions'][i]['emoji'] = "N/A"
-            embed.add_field(name="Emoji", value=data['definitions'][i]['emoji'].decode('utf-8'), inline=True)
             embed.add_field(name="Meaning", value= "**" + data['definitions'][i]['definition'] + "**" , inline=False)
             if data['definitions'][i]['example'] is None:
                 data['definitions'][i]['example'] = "N/A"
