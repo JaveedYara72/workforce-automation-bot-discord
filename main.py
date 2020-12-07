@@ -37,7 +37,7 @@ async def define(msg, *args):
     # API REQUEST
     word = args[0]
     url = 'https://owlbot.info/api/v4/dictionary/' + str(word)
-    headers = { "Authorization": "Token c5a6932805bff0c739cd87d45dd8530d88c064bd" }
+    headers = { "Authorization": CONFIG.OWL_TOKEN }
     try:
         response = requests.get(url, headers=headers)
     except Exception as e:
@@ -55,14 +55,14 @@ async def define(msg, *args):
 #            await msg.send(data['definitions'][i]['example'])
 #            await msg.send(data['definitions'][i]['image_url'])
 #            await msg.send(data['definitions'][i]['emoji'])
-            embed=discord.Embed(title="Koolz! Here is my analysis ^_^", color=0x57b28f)
+            embed=discord.Embed(title="Word: " + str(word), color=0x57b28f)
             embed.set_author(name="Kourage Word Analyzer", url="https://www.github.com/koders-in/kourage", icon_url=bot.user.avatar_url) 
             if data['definitions'][i]['image_url'] is not None:
                 embed.set_thumbnail(url=data['definitions'][i]['image_url'])
             embed.add_field(name="Type", value=data['definitions'][i]['type'], inline=True)
             if data['definitions'][i]['emoji'] is None:
                 data['definitions'][i]['emoji'] = "N/A"
-            embed.add_field(name="Emoji", value=data['definitions'][i]['emoji'], inline=True)
+            embed.add_field(name="Emoji", value=data['definitions'][i]['emoji'].decode('utf-8'), inline=True)
             embed.add_field(name="Meaning", value= "**" + data['definitions'][i]['definition'] + "**" , inline=False)
             if data['definitions'][i]['example'] is None:
                 data['definitions'][i]['example'] = "N/A"
@@ -70,7 +70,7 @@ async def define(msg, *args):
             embed.set_footer(text="Made with ❤️️  by Koders")
             await msg.send(embed=embed)
     except Exception as e:
-        await msg.send("No definition found")
+        await msg.send("No definition found :(")
         print("Something went wrong during parsing JSON. Reason: " + str(e))
 
 
