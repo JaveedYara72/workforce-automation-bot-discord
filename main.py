@@ -34,8 +34,7 @@ async def define(msg, *args):
     import requests
     import json
     
-    # API REQUEST
-    word = args[0]
+    word = args[0] # API REQUEST
     url = 'https://owlbot.info/api/v4/dictionary/' + str(word)
     headers = { "Authorization": CONFIG.OWL_TOKEN }
     try:
@@ -45,16 +44,8 @@ async def define(msg, *args):
 
     # JSON PARSE WITH EMBED
     data = json.loads(response.text)
-    await msg.send(response.text)
     try:
-        # print(len(data['definitions']))
-        # print(data['definitions'])
         for i in range(0, len(data['definitions'])):
-#            await msg.send(data['definitions'][i]['type'])
-#            await msg.send(data['definitions'][i]['definition'])
-#            await msg.send(data['definitions'][i]['example'])
-#            await msg.send(data['definitions'][i]['image_url'])
-#            await msg.send(data['definitions'][i]['emoji'])
             embed=discord.Embed(title="Word: " + str(word), color=0x57b28f)
             embed.set_author(name="Kourage Word Analyzer", url="https://www.github.com/koders-in/kourage", icon_url=bot.user.avatar_url) 
             if data['definitions'][i]['image_url'] is not None:
@@ -70,7 +61,6 @@ async def define(msg, *args):
             embed.set_footer(text="Made with ❤️️  by Koders")
             await msg.send(embed=embed)
     except Exception as e:
-        await msg.send("No definition found :(")
         print("Something went wrong during parsing JSON. Reason: " + str(e))
 
 
