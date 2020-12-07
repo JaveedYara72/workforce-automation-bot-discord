@@ -40,10 +40,9 @@ async def define(msg, *args):
     try:
         response = requests.get(url, headers=headers)
     except Exception as e:
-        print("Something went wrong during requesting API. Reason: " + str(e))
+        print("Something went wrong during requesting API. Reason: " + str(e)) # Request exception
 
-    # JSON PARSE WITH EMBED
-    data = json.loads(response.text)
+    data = json.loads(response.text) # JSON PARSE WITH EMBED
     try:
         for i in range(0, len(data['definitions'])):
             embed=discord.Embed(title="Word: " + str(word), color=0x57b28f)
@@ -58,8 +57,7 @@ async def define(msg, *args):
             embed.set_footer(text="Made with ❤️️  by Koders")
             await msg.send(embed=embed)
     except Exception as e:
-        print("Something went wrong during parsing JSON. Reason: " + str(e))
-
+        print("Something went wrong during parsing JSON. Reason: " + str(e)) # JSON parsing exception
 
 # Vision command
 @bot.command()
