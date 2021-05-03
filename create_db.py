@@ -1,5 +1,5 @@
 # This file creates database automatically
-# Please run this only if demo.db is not present
+# Please run this only if db.db is not present
 
 import os
 import sqlite3
@@ -118,6 +118,6 @@ try:
     db = sqlite3.connect(db)
     cur = db.cursor()
     create_tables(db, cur)
-except Exception as e: 
+except Exception as e:
     print(e) # Prints exception on connection with db
 

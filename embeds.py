@@ -3,6 +3,7 @@ from discord.ext import commands
 import time
 import asyncio
 
+# Update this
 def vision():
     embed = discord.Embed(title="Company Goals (Vision 2020)",
                     description="Goals are used to help a business grow and achieve its objectives. They can be used to foster teamwork and help the business describe what it wants to accomplish in a specific time period. Setting up goals is an important part of business plan.")

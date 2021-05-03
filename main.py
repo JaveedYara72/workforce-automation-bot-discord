@@ -13,7 +13,11 @@ import config as CONFIG # Capitals for global
 import embeds as EMBEDS
 
 
+# FOR TESTING
 bot = commands.Bot(command_prefix="~")
+
+# FOR PRODUCTION
+# bot = commands.Bot(command_prefix="~")
 
 @bot.event
 async def on_ready(): # Triggers when bot is ready
@@ -34,7 +38,6 @@ async def ping(msg):
 @bot.command()
 @commands.has_any_role("Koders")
 async def define(msg, *args):
-   
     word = args[0] # API REQUEST
     url = 'https://owlbot.info/api/v4/dictionary/' + str(word)
     headers = { "Authorization": CONFIG.OWL_TOKEN }
