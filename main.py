@@ -14,7 +14,7 @@ import embeds as EMBEDS
 
 
 # FOR TESTING
-bot = commands.Bot(command_prefix="~")
+bot = commands.Bot(command_prefix="!")
 
 # FOR PRODUCTION
 # bot = commands.Bot(command_prefix="~")
@@ -70,6 +70,7 @@ async def define(msg, *args):
             await msg.send(embed=embed)
     except Exception as e:
         print("Something went wrong during parsing JSON. Reason: " + str(e)) # JSON parsing exception
+        await msg.send("Can't find its meaning over the database") # Sending message so user can read
 
 # Vision command
 @bot.command()
@@ -96,8 +97,9 @@ async def remind(msg, *args):
     embed.set_thumbnail(url="https://www.flaticon.com/svg/static/icons/svg/2919/2919780.svg")
     embed.set_footer(text="Made with ❤️️  by Koders")
     await msg.send(embed=embed)
-    msg = await msg.send(args[2])
-    await msg.delete() # Deletes @person message who got tagged
+    if(len(args) > 2):
+        msg = await msg.send(args[2])
+        await msg.delete() # Deletes @person message who got tagged
 
 # Poll command
 @bot.command()
