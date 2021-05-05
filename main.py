@@ -1,20 +1,46 @@
 # Manual file imports
-import json
-import discord
-from discord.ext import commands, tasks
 import asyncio
-import requests
-import schedule
-import time
 import datetime
-
+import json
 # Logging format
 import logging
+import platform
+import time
+
+import discord
+import requests
+from colorama import init
+from discord.ext import commands
+from discord.ext.tasks import loop
+from termcolor import colored
+
+machine = platform.node()
+init()
 
 logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
 
 import config as CONFIG  # Capitals for global
 import embeds as EMBEDS  # Capitals for global
+
+
+class Logger:
+    def __init__(self, app):
+        self.app = app
+
+    def info(self, message):
+        print(colored(f'[{time.asctime(time.localtime())}] [{machine}] [{self.app}] {message}', 'yellow'))
+
+    def warning(self, message):
+        print(colored(f'[{time.asctime(time.localtime())}] [{machine}] [{self.app}] {message}', 'green'))
+
+    def error(self, message):
+        print(colored(f'[{time.asctime(time.localtime())}] [{machine}] [{self.app}] {message}', 'red'))
+
+    def color(self, message, color):
+        print(colored(f'{message}', "blue"))
+
+
+logger = Logger("kourage")
 
 # FOR TESTING
 bot = commands.Bot(command_prefix="!")
@@ -40,7 +66,7 @@ def check(reaction, user):
     return str(reaction.emoji) == '⬆️' and user.bot is not True
 
 
-async def take_reaction(ctx, timeout=1200.0):
+async def take_reaction(ctx, timeout=50.0):
     start = time.time()
     try:
         result = await bot.wait_for('reaction_add', check=check, timeout=timeout)
@@ -54,7 +80,9 @@ async def take_reaction(ctx, timeout=1200.0):
         await channel.send(embed=embed)
         end = time.time()
         timeout = timeout - (end - start)
-        result = await take_reaction(ctx, timeout=timeout)
+
+        # Write into Gsheet Username Time Date
+        await take_reaction(ctx, timeout=timeout)
 
 
 async def take_attendance_morning(ctx):
@@ -70,27 +98,19 @@ async def take_attendance_lunch(ctx):
     await msg.add_reaction(emoji="⬆️")
     await take_reaction(msg)
 
+
+@loop(minutes=1)
 async def attendance_task():
     await bot.wait_until_ready()
     channel = bot.get_channel(839125549304643684)  # attendance channel id
-    while bot.is_closed():
-        schedule.run_pending()
-        time.sleep(60)  # Wait for 1 minutes
-
-    schedule.every().monday.at("11:00").do(await take_attendance_morning(channel))
-    schedule.every().monday.at("03:00").do(await take_attendance_lunch(channel))
-
-    schedule.every().tuesday.at("11:00").do(await take_attendance_morning(channel))
-    schedule.every().tuesday.at("03:00").do(await take_attendance_lunch(channel))
-
-    schedule.every().wednesday.at("12:17").do(await take_attendance_morning(channel))
-    schedule.every().wednesday.at("03:00").do(await take_attendance_lunch(channel))
-
-    schedule.every().thursday.at("11:00").do(await take_attendance_morning(channel))
-    schedule.every().thursday.at("03:00").do(await take_attendance_lunch(channel))
-
-    schedule.every().friday.at("11:00").do(await take_attendance_morning(channel))
-    schedule.every().friday.at("03:00").do(await take_attendance_lunch(channel))
+    working_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    date_time = datetime.datetime.now()
+    for working_day in working_days:
+        if working_day == date_time.strftime("%A") and date_time.strftime("%H:%M") == "11:00":
+            await take_attendance_morning()
+        if working_day == date_time.strftime("%A") and date_time.strftime("%H:%M") == "03:00":
+            await take_attendance_lunch()
+    Logger.info("Waiting for tasks")
 
 
 # Ping command
@@ -116,7 +136,7 @@ async def define(msg, *args):
     try:
         response = requests.get(url, headers=headers)
     except Exception as e:
-        print("Something went wrong during requesting API. Reason: " + str(e))  # Request exception
+        Logger.error("Something went wrong during requesting API. Reason: " + str(e))  # Request exception
 
     data = json.loads(response.text)  # JSON PARSE WITH EMBED
     try:
@@ -141,7 +161,7 @@ async def define(msg, *args):
             embed.set_footer(text="Made with ❤️️  by Koders")
             await msg.send(embed=embed)
     except Exception as e:
-        print("Something went wrong during parsing JSON. Reason: " + str(e))  # JSON parsing exception
+        Logger.error("Something went wrong during parsing JSON. Reason: " + str(e))  # JSON parsing exception
         await msg.send("Can't find its meaning over the database")  # Sending message so user can read
 
 
@@ -198,7 +218,8 @@ async def poll(msg, question, *options: str):
 
 if __name__ == "__main__":
     try:
-        bot.loop.create_task(attendance_task())
+        attendance_task.start()
+        # bot.loop.create_task(attendance_task())
         bot.run(CONFIG.TOKEN)
     except Exception as _e:
         logging.warning("Exception found at main worker. Reason: " + str(_e), exc_info=True)
