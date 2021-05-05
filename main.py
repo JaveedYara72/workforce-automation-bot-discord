@@ -21,6 +21,7 @@ logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
 
 import config as CONFIG  # Capitals for global
 import embeds as EMBEDS  # Capitals for global
+import gsheet as GSHEET  # Capital for global
 
 
 class Logger:
@@ -51,11 +52,10 @@ bot = commands.Bot(command_prefix="!")
 
 @bot.event
 async def on_ready():  # Triggers when bot is ready
-    logging.info("Kourage is running at version {0}".format(CONFIG.VERSION))
+    logger.warning("Kourage is running at version {0}".format(CONFIG.VERSION))
 
 
 # TODO
-# Add Attendance system
 # Add Duckhunt system responsive
 # Look for setting career at koders with something better at server setup
 # Google doc requirement on Koders App
@@ -80,8 +80,11 @@ async def take_reaction(ctx, timeout=50.0):
         await channel.send(embed=embed)
         end = time.time()
         timeout = timeout - (end - start)
+        logger.warning(user)
 
         # Write into Gsheet Username Time Date
+        GSHEET.insert(date_time.strftime("%D"), date_time.strftime("%H:%M:%S"), user)
+        logger.warning(user)
         await take_reaction(ctx, timeout=timeout)
 
 
@@ -107,10 +110,12 @@ async def attendance_task():
     date_time = datetime.datetime.now()
     for working_day in working_days:
         if working_day == date_time.strftime("%A") and date_time.strftime("%H:%M") == "11:00":
-            await take_attendance_morning()
+            logger.info("Ran morning attendance.")
+            await take_attendance_morning(channel)
         if working_day == date_time.strftime("%A") and date_time.strftime("%H:%M") == "03:00":
-            await take_attendance_lunch()
-    Logger.info("Waiting for tasks")
+            logger.info("Ran post lunch attendance.")
+            await take_attendance_lunch(channel)
+    logger.info("Waiting for tasks...")
 
 
 # Ping command
@@ -136,7 +141,7 @@ async def define(msg, *args):
     try:
         response = requests.get(url, headers=headers)
     except Exception as e:
-        Logger.error("Something went wrong during requesting API. Reason: " + str(e))  # Request exception
+        logger.error("Something went wrong during requesting API. Reason: " + str(e))  # Request exception
 
     data = json.loads(response.text)  # JSON PARSE WITH EMBED
     try:
@@ -219,7 +224,6 @@ async def poll(msg, question, *options: str):
 if __name__ == "__main__":
     try:
         attendance_task.start()
-        # bot.loop.create_task(attendance_task())
         bot.run(CONFIG.TOKEN)
     except Exception as _e:
         logging.warning("Exception found at main worker. Reason: " + str(_e), exc_info=True)
