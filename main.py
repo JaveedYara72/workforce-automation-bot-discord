@@ -44,11 +44,11 @@ class Logger:
 logger = Logger("kourage")
 
 # FOR TESTING
-bot = commands.Bot(command_prefix="!")
+# bot = commands.Bot(command_prefix="!")
 
 
 # FOR PRODUCTION
-# bot = commands.Bot(command_prefix="~")
+bot = commands.Bot(command_prefix="~")
 
 @bot.event
 async def on_ready():  # Triggers when bot is ready
@@ -66,7 +66,7 @@ def check(reaction, user):
     return str(reaction.emoji) == '⬆️' and user.bot is not True
 
 
-async def take_reaction(ctx, timeout=50.0):
+async def take_reaction(ctx, timeout=1200.0):
     start = time.time()
     try:
         result = await bot.wait_for('reaction_add', check=check, timeout=timeout)
