@@ -1,3 +1,4 @@
+# DO NOT RUN THIS FILE DIRECTLY
 # This file creates database automatically
 # Please run this only if db.db is not present
 
