@@ -112,7 +112,7 @@ async def attendance_task():
         if working_day == date_time.strftime("%A") and date_time.strftime("%H:%M") == "11:00":
             logger.info("Ran morning attendance.")
             await take_attendance_morning(channel)
-        if working_day == date_time.strftime("%A") and date_time.strftime("%H:%M") == "03:00":
+        if working_day == date_time.strftime("%A") and date_time.strftime("%H:%M") == "15:00":
             logger.info("Ran post lunch attendance.")
             await take_attendance_lunch(channel)
     logger.info("Waiting for tasks...")
