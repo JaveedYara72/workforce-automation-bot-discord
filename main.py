@@ -57,6 +57,7 @@ async def on_ready():  # Triggers when bot is ready
 
 @bot.event
 async def on_member_join(member):  # Triggers when members joins the server
+    logger.warning("Member joined.")
     role = discord.utils.get(member.server.roles, name="Kommunity")
     await bot.add_roles(member, role)
 
