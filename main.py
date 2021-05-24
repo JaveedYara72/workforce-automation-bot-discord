@@ -8,6 +8,7 @@ import logging
 import platform
 import time
 
+from discord.utils import get
 import discord
 import requests
 from colorama import init
@@ -59,12 +60,10 @@ async def on_ready():  # Triggers when bot is ready
 
 @bot.event
 async def on_member_join(member):  # Triggers when members joins the server
-    await member.send('Thank you for joining Koders')
-    await bot.add_roles(member, 726643908624515195)
-
-@bot.event
-async def on_message(ctx):  # Triggers when members joins the server
-    logger.warning(ctx.content)
+    #await member.send('Thank you for joining Koders') # Have an embed there
+    role = get(member.guild.roles, id=726643908624515195)
+    await member.add_roles(role)
+    
 
 # TODO
 # Add Duckhunt system responsive
