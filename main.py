@@ -47,9 +47,11 @@ logger = Logger("kourage")
 # FOR TESTING
 # bot = commands.Bot(command_prefix="!")
 
+intents = discord.Intents.default()
+intents.members = True
 
 # FOR PRODUCTION
-bot = commands.Bot(command_prefix="~")
+bot = commands.Bot(command_prefix="~", intents=intents)
 
 @bot.event
 async def on_ready():  # Triggers when bot is ready
@@ -57,9 +59,12 @@ async def on_ready():  # Triggers when bot is ready
 
 @bot.event
 async def on_member_join(member):  # Triggers when members joins the server
-    logger.warning("Member joined.")
-    role = discord.utils.get(member.server.roles, name="Kommunity")
-    await bot.add_roles(member, role)
+    await member.send('Thank you for joining Koders')
+    await bot.add_roles(member, 726643908624515195)
+
+@bot.event
+async def on_message(ctx):  # Triggers when members joins the server
+    logger.warning(ctx.content)
 
 # TODO
 # Add Duckhunt system responsive
