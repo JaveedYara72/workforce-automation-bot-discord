@@ -2,6 +2,7 @@
 import asyncio
 import datetime
 import json
+
 # Logging format
 import logging
 import platform
@@ -54,6 +55,10 @@ bot = commands.Bot(command_prefix="~")
 async def on_ready():  # Triggers when bot is ready
     logger.warning("Kourage is running at version {0}".format(CONFIG.VERSION))
 
+@bot.event
+async def on_member_join(member):  # Triggers when members joins the server
+    role = discord.utils.get(member.server.roles, name="Kommunity")
+    await bot.add_roles(member, role)
 
 # TODO
 # Add Duckhunt system responsive
