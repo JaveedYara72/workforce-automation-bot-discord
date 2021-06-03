@@ -1,9 +1,9 @@
-
+import os
 # BOT TOKEN
-TOKEN = ""
+TOKEN = os.environ.get('TOKEN')
 
 # OWL API AUTHORIZATION
-OWL_TOKEN = ""
+OWL_TOKEN = os.environ.get('OWN_TOKEN')
 
 # VERSION NUMBER OF KOURAGE
 VERSION = "0.1.0"
