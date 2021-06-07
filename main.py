@@ -2,6 +2,7 @@
 import asyncio
 import datetime
 import json
+import csv
 from uuid import uuid4
 
 # Logging format
@@ -196,21 +197,22 @@ async def vision(msg):
 async def suggestion(ctx):
     emojis = ['✅','❌'] 
     channel = bot.get_channel(849583285645475850)
-    suggestEmbed = discord.Embed(colour=0x28da5b)
-    suggestEmbed=discord.Embed(title="Suggestion Bot", description="To accept the suggestion: ✅"
+    
+    admin_embed = discord.Embed(colour=0x28da5b)
+    admin_embed=discord.Embed(title="Suggestion Bot", description="To accept the suggestion: ✅"
                                                                     "To decline the suggestion: ❌", color=0x28da5b)
-    suggestEmbed.set_thumbnail(url="https://media.discordapp.net/attachments/700257704723087360/819643015470514236/SYM_TEAL.png?width=455&height=447")
-    suggestEmbed.timestamp = datetime.datetime.utcnow()
-    suggestEmbed.set_footer(text="Made with ❤️️  by Koders")
-    suggestEmbed.set_author(name = f'suggested by {ctx.message.author}', icon_url = f'{ctx.author.avatar_url}')
+    admin_embed.set_thumbnail(url="https://media.discordapp.net/attachments/700257704723087360/819643015470514236/SYM_TEAL.png?width=455&height=447")
+    admin_embed.timestamp = datetime.datetime.utcnow()
+    admin_embed.set_footer(text="Made with ❤️️  by Koders")
+    admin_embed.set_author(name = f'suggested by {ctx.message.author}', icon_url = f'{ctx.author.avatar_url}')
     
     # Title
-    suggestEmbed1 = discord.Embed(colour=0x28da5b)
-    suggestEmbed1 = discord.Embed(
+    title_embed = discord.Embed(colour=0x28da5b)
+    title_embed = discord.Embed(
         title = 'Please tell me the title of the Suggestion',
         description = ' This request will timeout after a minute'
     )
-    sent = await ctx.send(embed = suggestEmbed1)
+    sent = await ctx.send(embed = title_embed)
     try:
         msg = await bot.wait_for(
             "message",
@@ -225,16 +227,16 @@ async def suggestion(ctx):
     
     except asyncio.TimeoutError:
         await sent.delete()
-        await ctx.send('Cancelling due to timeout.', delete_after = 10)
+        await ctx.send('Cancelling due to timeout.', delete_after = 60.0)
         
         
     # description
-    suggestEmbed2 = discord.Embed(colour=0x28da5b)
-    suggestEmbed2 = discord.Embed(
+    description_embed = discord.Embed(colour=0x28da5b)
+    description_embed = discord.Embed(
         title = 'Please tell me the Description of the Suggestion',
         description = ' This request will timeout after 5 minutes'
     )
-    sent2 = await ctx.send(embed = suggestEmbed2)
+    sent2 = await ctx.send(embed = description_embed)
     try:
         msg = await bot.wait_for(
             "message",
@@ -252,15 +254,15 @@ async def suggestion(ctx):
         await ctx.send('Cancelling due to timeout.', delete_after = 300.0)
         
     # Unique ID
-    eventid = datetime.datetime.now().strftime('%Y%m-%d%H-%M%S-') + str(uuid4())
-    uniqueID = eventid[48:].upper()
+    event_id = datetime.datetime.now().strftime('%Y%m-%d%H-%M%S-') + str(uuid4())
+    unique_id = event_id[48:].upper()
     
-    suggestEmbed.add_field(name='Ticket ID: ', value = f'{uniqueID}', inline=False)    
-    suggestEmbed.add_field(name = 'Title', value  = f'{titlemessage}',inline = False)
-    suggestEmbed.add_field(name = 'Description', value  = f'{descriptionmessage}',inline = False)
+    admin_embed.add_field(name='Ticket ID: ', value = f'{unique_id}', inline=False)    
+    admin_embed.add_field(name = 'Title', value  = f'{titlemessage}',inline = False)
+    admin_embed.add_field(name = 'Description', value  = f'{descriptionmessage}',inline = False)
     
     
-    message = await channel.send(embed = suggestEmbed)
+    message = await channel.send(embed = admin_embed)
     await message.add_reaction('✅')
     await message.add_reaction('❌')
     
@@ -268,7 +270,7 @@ async def suggestion(ctx):
     # sendEmbed.add_field(name = 'New Suggestion!', value  = f'{suggestion}')
     sendEmbed.add_field(name = 'Title', value  = f'{titlemessage}')
     sendEmbed.add_field(name = 'Description', value  = f'{descriptionmessage}')
-    sendEmbed.add_field(name='Ticket ID: ', value = f'{uniqueID}', inline=False) 
+    sendEmbed.add_field(name='Ticket ID: ', value = f'{unique_id}', inline=False) 
     sendEmbed.set_author(name = f'suggested by {ctx.message.author}', icon_url = f'{ctx.author.avatar_url}')
     sendEmbed.set_thumbnail(url="https://media.discordapp.net/attachments/700257704723087360/819643015470514236/SYM_TEAL.png?width=455&height=447")
     sendEmbed.timestamp = datetime.datetime.utcnow()
@@ -279,40 +281,48 @@ async def suggestion(ctx):
     
     try:
         reaction, user = await bot.wait_for('reaction_add',check=check,timeout=604800) # this reaction is checking for adding an emoji, this line is automatically getting run because of like 31,32
+        # Role logic
+        role_string = ''
+        for role in user.roles:
+            if(role.name == '@everyone'):
+                continue
+            else:
+                role_string += role.name
+                role_string += ','
+        role_string = role_string[:-1]
+        
         while reaction.message == message:
-            if str(reaction.emoji) == "✅":
-                # Role logic
-                xstring = ''
-                for role in user.roles:
-                    if(role.name == '@everyone'):
-                        continue
-                    else:
-                        xstring += role.name
-                        xstring += ','
-                xstring = xstring[:-1]
-                
-                await ctx.send(f'🙌🙌 Bravo!! Your suggestion has been Acknowledged by {user} who has these roles ({xstring}). We appreciate your efforts!')
+            if str(reaction.emoji) == "✅":                
+                await ctx.send(f'🙌🙌 Bravo!! Your suggestion has been Acknowledged by {user} who has these roles ({role_string}). We appreciate your efforts!')
                 sendEmbed.add_field(name='Approved by:  ', value = f'{user}', inline=False) 
                 await ctx.send("Your Suggestion was: ")
                 message1 = await ctx.send(embed = sendEmbed)
-                await channel.send(f'suggestion of {ctx.message.author}, with ID: {uniqueID} has been approved by {user} who has these roles ({xstring}), this post will no longer be active')
+                
+                # write to files
+                with open("result.csv", "a",newline= '') as file:
+                    fieldnames = ['Title','Description','ID', 'Status', 'Acknowledged by']
+                    writer = csv.DictWriter(file,fieldnames= fieldnames)
+                    
+                    writer.writeheader()
+                    writer.writerow({'Title':titlemessage,'Description':descriptionmessage,'ID': unique_id, 'Status': 'Rejected','Acknowledged by': f'{user}'})
+                
+                await channel.send(f'suggestion of {ctx.message.author}, with ID: {unique_id} has been approved by {user} who has these roles ({role_string}), this post will no longer be active')
                 return
             if str(reaction.emoji) == "❌":
-                
-                # Role logic
-                xstring = ''
-                for role in user.roles:
-                    if(role.name == '@everyone'):
-                        continue
-                    else:
-                        xstring += role.name
-                        xstring += ' '
-                xstring = xstring[:-1]
-                await ctx.send(f'🌸 Sorry! Your suggestion has not been Acknowledged by {user} who has these roles ({xstring}). We thank you for your valuable time!')
+                await ctx.send(f'🌸 Sorry! Your suggestion has not been Acknowledged by {user} who has these roles ({role_string}). We thank you for your valuable time!')
                 sendEmbed.add_field(name='Approved by:  ', value = f'{user}', inline=False) 
                 await ctx.send("Your Suggestion was: ")
                 message1 = await ctx.send(embed = sendEmbed)
-                await channel.send(f'suggestion of {ctx.message.author}, with ID: {uniqueID} has not been approved by {user} who has these roles ({xstring}), this post will no longer be active')
+                
+                # write to files
+                with open("result.csv", "a",newline= '') as file:
+                    fieldnames = ['Title','Description','ID', 'Status', 'Acknowledged by']
+                    writer = csv.DictWriter(file,fieldnames= fieldnames)
+                    
+                    writer.writeheader()
+                    writer.writerow({'Title':titlemessage,'Description':descriptionmessage,'ID': unique_id, 'Status': 'Rejected','Acknowledged by': f'{user}'})
+                
+                await channel.send(f'suggestion of {ctx.message.author}, with ID: {unique_id} has not been approved by {user} who has these roles ({role_string}), this post will no longer be active')
                 return
     except asyncio.TimeoutError:
         await ctx.send("Your suggestion was timed out. Please try again!")
