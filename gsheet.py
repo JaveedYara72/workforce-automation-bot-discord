@@ -14,7 +14,7 @@ SAMPLE_RANGE_NAME = 'A2:C'
 
 def insert(date, time, username):
     scopes = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/drive.file",
-              "https://www.googleapis.com/auth/spreadsheets"]
+                "https://www.googleapis.com/auth/spreadsheets"]
     secret_file = os.path.join(os.getcwd(), 'apikey.json')
 
     credentials = service_account.Credentials.from_service_account_file(secret_file, scopes=scopes)

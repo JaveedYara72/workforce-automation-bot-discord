@@ -100,15 +100,15 @@ def create_tables(db, cur):
 
     # Career At Koders
     cur.execute("""create table if not exists career_at_koders(Id integer PRIMARY KEY AUTOINCREMENT,
-      Name text NOT NULL DEFAULT 'NONE',
-      Address text NOT NULL DEFAULT 'NONE',
-      Gender text NOT NULL DEFAULT 'NONE',
-      DOB text NOT NULL DEFAULT 'NONE',
-      Joined_At text NOT NULL DEFAULT 'NONE',
-      Mail text NOT NULL DEFAULT 'NONE',
-      Phone text NOT NULL DEFAULT 'NONE',
-      Whatsapp text NOT NULL DEFAULT 'NONE'
-      )""")
+        Name text NOT NULL DEFAULT 'NONE',
+        Address text NOT NULL DEFAULT 'NONE',
+        Gender text NOT NULL DEFAULT 'NONE',
+        DOB text NOT NULL DEFAULT 'NONE',
+        Joined_At text NOT NULL DEFAULT 'NONE',
+        Mail text NOT NULL DEFAULT 'NONE',
+        Phone text NOT NULL DEFAULT 'NONE',
+        Whatsapp text NOT NULL DEFAULT 'NONE'
+    )""")
 
     db.commit()
 

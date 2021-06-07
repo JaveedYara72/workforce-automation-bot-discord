@@ -2,6 +2,7 @@
 import asyncio
 import datetime
 import json
+from uuid import uuid4
 
 # Logging format
 import logging
@@ -133,11 +134,11 @@ async def attendance_task():
 @commands.has_any_role("@everyone")
 async def ping(msg):
     await msg.send('Pong! 🏓\n ' +
-                   'Name: Kourage \n ' +
-                   'Description: AIO bot of Koders \n ' +
-                   'Version: {0} \n '.format(CONFIG.VERSION) +
-                   'Username: {0} \n '.format(msg.author.name) +
-                   'Latency: {0} sec '.format(round(bot.latency, 1)))
+                'Name: Kourage \n ' +
+                'Description: AIO bot of Koders \n ' +
+                'Version: {0} \n '.format(CONFIG.VERSION) +
+                'Username: {0} \n '.format(msg.author.name) +
+                'Latency: {0} sec '.format(round(bot.latency, 1)))
 
 
 # Define command
@@ -158,8 +159,8 @@ async def define(msg, *args):
         for i in range(0, len(data['definitions'])):
             embed = discord.Embed(title="Word: " + str(word), color=0x57b28f)
             embed.set_author(name="Kourage Word Analyzer",
-                             url="https://www.github.com/koders-in/kourage",
-                             icon_url=bot.user.avatar_url)
+                            url="https://www.github.com/koders-in/kourage",
+                            icon_url=bot.user.avatar_url)
             if data['definitions'][i]['image_url'] is not None:
                 embed.set_thumbnail(url=data['definitions'][i]['image_url'])
             embed.add_field(name="Type",
@@ -189,6 +190,135 @@ async def vision(msg):
     await msg.send(embed=embed)
 
 
+# Suggestion command
+@bot.command()
+@commands.has_any_role("Koders")
+async def suggestion(ctx):
+    emojis = ['✅','❌'] 
+    channel = bot.get_channel(849583285645475850)
+    suggestEmbed = discord.Embed(colour=0x28da5b)
+    suggestEmbed=discord.Embed(title="Suggestion Bot", description="To accept the suggestion: ✅"
+                                                                    "To decline the suggestion: ❌", color=0x28da5b)
+    suggestEmbed.set_thumbnail(url="https://media.discordapp.net/attachments/700257704723087360/819643015470514236/SYM_TEAL.png?width=455&height=447")
+    suggestEmbed.timestamp = datetime.datetime.utcnow()
+    suggestEmbed.set_footer(text="Made with ❤️️  by Koders")
+    suggestEmbed.set_author(name = f'suggested by {ctx.message.author}', icon_url = f'{ctx.author.avatar_url}')
+    
+    # Title
+    suggestEmbed1 = discord.Embed(colour=0x28da5b)
+    suggestEmbed1 = discord.Embed(
+        title = 'Please tell me the title of the Suggestion',
+        description = ' This request will timeout after a minute'
+    )
+    sent = await ctx.send(embed = suggestEmbed1)
+    try:
+        msg = await bot.wait_for(
+            "message",
+            timeout=60.0,
+            check=lambda message: message.author == ctx.author
+        )
+        
+        if msg:
+            await sent.delete()
+            titlemessage = msg.content
+            await msg.delete()
+    
+    except asyncio.TimeoutError:
+        await sent.delete()
+        await ctx.send('Cancelling due to timeout.', delete_after = 10)
+        
+        
+    # description
+    suggestEmbed2 = discord.Embed(colour=0x28da5b)
+    suggestEmbed2 = discord.Embed(
+        title = 'Please tell me the Description of the Suggestion',
+        description = ' This request will timeout after 5 minutes'
+    )
+    sent2 = await ctx.send(embed = suggestEmbed2)
+    try:
+        msg = await bot.wait_for(
+            "message",
+            timeout=300.0,
+            check=lambda message: message.author == ctx.author
+        )
+        
+        if msg:
+            await sent2.delete()
+            descriptionmessage = msg.content
+            await msg.delete()
+    
+    except asyncio.TimeoutError:
+        await sent2.delete()
+        await ctx.send('Cancelling due to timeout.', delete_after = 300.0)
+        
+    # Unique ID
+    eventid = datetime.datetime.now().strftime('%Y%m-%d%H-%M%S-') + str(uuid4())
+    uniqueID = eventid[48:].upper()
+    
+    suggestEmbed.add_field(name='Ticket ID: ', value = f'{uniqueID}', inline=False)    
+    suggestEmbed.add_field(name = 'Title', value  = f'{titlemessage}',inline = False)
+    suggestEmbed.add_field(name = 'Description', value  = f'{descriptionmessage}',inline = False)
+    
+    
+    message = await channel.send(embed = suggestEmbed)
+    await message.add_reaction('✅')
+    await message.add_reaction('❌')
+    
+    sendEmbed = discord.Embed(colour = 0x28da5b)
+    # sendEmbed.add_field(name = 'New Suggestion!', value  = f'{suggestion}')
+    sendEmbed.add_field(name = 'Title', value  = f'{titlemessage}')
+    sendEmbed.add_field(name = 'Description', value  = f'{descriptionmessage}')
+    sendEmbed.add_field(name='Ticket ID: ', value = f'{uniqueID}', inline=False) 
+    sendEmbed.set_author(name = f'suggested by {ctx.message.author}', icon_url = f'{ctx.author.avatar_url}')
+    sendEmbed.set_thumbnail(url="https://media.discordapp.net/attachments/700257704723087360/819643015470514236/SYM_TEAL.png?width=455&height=447")
+    sendEmbed.timestamp = datetime.datetime.utcnow()
+    sendEmbed.set_footer(text="Made with ❤️️  by Koders")
+    
+    def check (reaction, user):
+        return not user.bot and message == reaction.message
+    
+    try:
+        reaction, user = await bot.wait_for('reaction_add',check=check,timeout=604800) # this reaction is checking for adding an emoji, this line is automatically getting run because of like 31,32
+        while reaction.message == message:
+            if str(reaction.emoji) == "✅":
+                # Role logic
+                xstring = ''
+                for role in user.roles:
+                    if(role.name == '@everyone'):
+                        continue
+                    else:
+                        xstring += role.name
+                        xstring += ','
+                xstring = xstring[:-1]
+                
+                await ctx.send(f'🙌🙌 Bravo!! Your suggestion has been Acknowledged by {user} who has these roles ({xstring}). We appreciate your efforts!')
+                sendEmbed.add_field(name='Approved by:  ', value = f'{user}', inline=False) 
+                await ctx.send("Your Suggestion was: ")
+                message1 = await ctx.send(embed = sendEmbed)
+                await channel.send(f'suggestion of {ctx.message.author}, with ID: {uniqueID} has been approved by {user} who has these roles ({xstring}), this post will no longer be active')
+                return
+            if str(reaction.emoji) == "❌":
+                
+                # Role logic
+                xstring = ''
+                for role in user.roles:
+                    if(role.name == '@everyone'):
+                        continue
+                    else:
+                        xstring += role.name
+                        xstring += ' '
+                xstring = xstring[:-1]
+                await ctx.send(f'🌸 Sorry! Your suggestion has not been Acknowledged by {user} who has these roles ({xstring}). We thank you for your valuable time!')
+                sendEmbed.add_field(name='Approved by:  ', value = f'{user}', inline=False) 
+                await ctx.send("Your Suggestion was: ")
+                message1 = await ctx.send(embed = sendEmbed)
+                await channel.send(f'suggestion of {ctx.message.author}, with ID: {uniqueID} has not been approved by {user} who has these roles ({xstring}), this post will no longer be active')
+                return
+    except asyncio.TimeoutError:
+        await ctx.send("Your suggestion was timed out. Please try again!")
+        return
+
+
 # Remind command
 @bot.command()
 @commands.has_any_role("Koders")
@@ -196,7 +326,7 @@ async def remind(msg, *args):
     await msg.message.delete()
     await asyncio.sleep(float(args[0]) * 60 * 60)
     embed = discord.Embed(title="Hello there! You have a reminder ^_^",
-                          color=0x57b28f)
+                        color=0x57b28f)
     embed.add_field(name="Don't forget to:",
                     value="{0}".format(args[1]),
                     inline=False)
@@ -217,8 +347,8 @@ async def remind(msg, *args):
 async def poll(msg, question, *options: str):
     await msg.message.delete()
     embed = discord.Embed(title="Hello there! Please vote. ^_^",
-                          description=question,
-                          color=0x54ab8a)
+                        description=question,
+                        color=0x54ab8a)
     embed.set_author(name="Koders")
     reactions = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣']
     for _x, option in enumerate(options):
@@ -229,6 +359,8 @@ async def poll(msg, question, *options: str):
     react_message = await msg.send(embed=embed)
     for reaction in reactions[:len(options)]:
         await react_message.add_reaction(reaction)
+        
+
 
 
 if __name__ == "__main__":
