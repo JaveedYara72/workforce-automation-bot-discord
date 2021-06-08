@@ -260,7 +260,12 @@ async def suggestion(ctx):
     admin_embed.add_field(name='Ticket ID: ', value = f'{unique_id}', inline=False)    
     admin_embed.add_field(name = 'Title', value  = f'{titlemessage}',inline = False)
     admin_embed.add_field(name = 'Description', value  = f'{descriptionmessage}',inline = False)
+
     
+    # with open('results.csv', 'w', encoding='UTF8', newline='') as f:
+    #     writer = csv.DictWriter(f, fieldnames = ['Title', 'Description', 'ID', 'Status','Suggested By','Acknowledged By','Remarks'] )
+    #     writer.writeheader()
+    # make a csv called results or suggestions
     
     message = await channel.send(embed = admin_embed)
     await message.add_reaction('✅')
@@ -292,36 +297,108 @@ async def suggestion(ctx):
         role_string = role_string[:-1]
         
         while reaction.message == message:
-            if str(reaction.emoji) == "✅":                
+            if str(reaction.emoji) == "✅":
+                
+                # Remarks Embed
+                remarks_embed = discord.Embed(colour=0x28da5b)
+                remarks_embed = discord.Embed(
+                    title = 'Any remarks to be added? ',
+                    description = ' This request will timeout after 5 minutes'
+                )
+                
+                remarks = await channel.send(embed = remarks_embed)
+                try:
+                    msg = await bot.wait_for(
+                        "message",
+                        timeout=300.0,
+                        check=lambda message: message.author == ctx.author
+                    )
+                    
+                    if msg:
+                        await remarks.delete()
+                        remarksmessage = msg.content
+                        await msg.delete()
+                
+                except asyncio.TimeoutError:
+                    await remarks.delete()
+                    await channel.send('Cancelling due to timeout.', delete_after = 300.0)
+                    
+                # CSV File logic
+                data = []
+
+                data.append(titlemessage)
+                data.append(descriptionmessage)
+                data.append(unique_id)
+                data.append("Approved")
+                data.append(ctx.message.author)
+                data.append(user)
+                data.append(remarksmessage)
+                
+                with open('results.csv', 'a', newline='') as f:
+                    writer = csv.writer(f)
+                    writer.writerow(data)
+
+                del data
+                                    
                 await ctx.send(f'🙌🙌 Bravo!! Your suggestion has been Acknowledged by {user} who has these roles ({role_string}). We appreciate your efforts!')
-                sendEmbed.add_field(name='Approved by:  ', value = f'{user}', inline=False) 
+                sendEmbed.add_field(name='Approved by:  ', value = f'{user}', inline=False)
+                sendEmbed.add_field(name='Remarks: ',value = f'{remarksmessage}',inline=False)
+                
                 await ctx.send("Your Suggestion was: ")
                 message1 = await ctx.send(embed = sendEmbed)
-                
-                # write to files
-                with open("result.csv", "a",newline= '') as file:
-                    fieldnames = ['Title','Description','ID', 'Status', 'Acknowledged by']
-                    writer = csv.DictWriter(file,fieldnames= fieldnames)
-                    
-                    writer.writeheader()
-                    writer.writerow({'Title':titlemessage,'Description':descriptionmessage,'ID': unique_id, 'Status': 'Rejected','Acknowledged by': f'{user}'})
                 
                 await channel.send(f'suggestion of {ctx.message.author}, with ID: {unique_id} has been approved by {user} who has these roles ({role_string}), this post will no longer be active')
                 return
             if str(reaction.emoji) == "❌":
+                
+                # Remarks Embed
+                remarks_embed = discord.Embed(colour=0x28da5b)
+                remarks_embed = discord.Embed(
+                    title = 'Any remarks to be added? ',
+                    description = ' This request will timeout after 5 minutes'
+                )
+                
+                remarks = await channel.send(embed = remarks_embed)
+                try:
+                    msg = await bot.wait_for(
+                        "message",
+                        timeout=300.0,
+                        check=lambda message: message.author == ctx.author
+                    )
+                    
+                    if msg:
+                        await remarks.delete()
+                        remarksmessage = msg.content
+                        await msg.delete()
+                
+                except asyncio.TimeoutError:
+                    await remarks.delete()
+                    await channel.send('Cancelling due to timeout.', delete_after = 300.0)
+                
                 await ctx.send(f'🌸 Sorry! Your suggestion has not been Acknowledged by {user} who has these roles ({role_string}). We thank you for your valuable time!')
-                sendEmbed.add_field(name='Approved by:  ', value = f'{user}', inline=False) 
+                sendEmbed.add_field(name='Approved by:  ', value = f'{user}', inline=False)
+                sendEmbed.add_field(name='Remarks: ',value = f'{remarksmessage}',inline=False) 
                 await ctx.send("Your Suggestion was: ")
                 message1 = await ctx.send(embed = sendEmbed)
                 
-                # write to files
-                with open("result.csv", "a",newline= '') as file:
-                    fieldnames = ['Title','Description','ID', 'Status', 'Acknowledged by']
-                    writer = csv.DictWriter(file,fieldnames= fieldnames)
-                    
-                    writer.writeheader()
-                    writer.writerow({'Title':titlemessage,'Description':descriptionmessage,'ID': unique_id, 'Status': 'Rejected','Acknowledged by': f'{user}'})
+                # CSV Logic
+                data = []
+
+                data.append(titlemessage)
+                data.append(descriptionmessage)
+                data.append(unique_id)
+                data.append("Rejecetd")
+                data.append(ctx.message.author)
+                data.append(user)
+                data.append(remarksmessage)
                 
+                with open('results.csv', 'a', newline='') as f:
+                    writer = csv.writer(f)
+                    # write the data
+                    writer.writerow(data)
+
+                del data
+                    
                 await channel.send(f'suggestion of {ctx.message.author}, with ID: {unique_id} has not been approved by {user} who has these roles ({role_string}), this post will no longer be active')
                 return
     except asyncio.TimeoutError:
