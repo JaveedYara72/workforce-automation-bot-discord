@@ -1,218 +1,51 @@
-# Manual file imports
-import asyncio
-import datetime
+import discord
+import os
 import json
 import csv
-from uuid import uuid4
-
-# Logging format
-import logging
-import platform
-import time
-
-from discord.utils import get
-import discord
+import datetime
+import asyncio
 import requests
-from colorama import init
+from uuid import uuid4
 from discord.ext import commands
-from discord.ext.tasks import loop
-from termcolor import colored
 
-machine = platform.node()
-init()
+import sqlite3
+from sqlite3.dbapi2 import Cursor
 
-logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
-
-import config as CONFIG  # Capitals for global
-import embeds as EMBEDS  # Capitals for global
-import gsheet as GSHEET  # Capital for global
-
-
-class Logger:
-    def __init__(self, app):
-        self.app = app
-
-    def info(self, message):
-        print(colored(f'[{time.asctime(time.localtime())}] [{machine}] [{self.app}] {message}', 'yellow'))
-
-    def warning(self, message):
-        print(colored(f'[{time.asctime(time.localtime())}] [{machine}] [{self.app}] {message}', 'green'))
-
-    def error(self, message):
-        print(colored(f'[{time.asctime(time.localtime())}] [{machine}] [{self.app}] {message}', 'red'))
-
-    def color(self, message, color):
-        print(colored(f'{message}', "blue"))
+db = sqlite3.connect('main.sqlite')
+cursor = db.cursor()
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS main(
+    Name TEXT,
+    RedmineAPI TEXT
+    )
+''')
 
 
-logger = Logger("kourage")
-
-# FOR TESTING
-# bot = commands.Bot(command_prefix="!")
-
-intents = discord.Intents.default()
-intents.members = True
-
-# FOR PRODUCTION
-bot = commands.Bot(command_prefix="~", intents=intents)
+bot = commands.Bot(command_prefix = "!")
 
 @bot.event
-async def on_ready():  # Triggers when bot is ready
-    logger.warning("Kourage is running at version {0}".format(CONFIG.VERSION))
+async def on_ready():
+    print("The Bot is Active")
 
-@bot.event
-async def on_member_join(member):  # Triggers when members joins the server
-    #await member.send('Thank you for joining Koders') # Have an embed there
-    role = get(member.guild.roles, id=726643908624515195)
-    await member.add_roles(role)
+@bot.command()
+async def log(ctx):
+    await ctx.channel.purge(limit = 1)
+    initial_embed = discord.Embed(colour=0x28da5b)
+    initial_embed=discord.Embed(title="Work Logger Bot", description="", color=0x28da5b)
+    initial_embed.add_field(name="Logging Work for", value = f"Logging work for {datetime.datetime.today().strftime('%d-%m-%y')}")
+    initial_embed.set_thumbnail(url="https://media.discordapp.net/attachments/700257704723087360/819643015470514236/SYM_TEAL.png?width=455&height=447")
+    initial_embed.timestamp = datetime.datetime.utcnow()
+    initial_embed.set_footer(text="Made with ❤️️  by Koders")
+    initial_embed.set_author(name = f'Bot initialized for  {ctx.message.author}', icon_url = f'{ctx.author.avatar_url}')
+    message  = await ctx.send(embed = initial_embed)
     
-
-# TODO
-# Add Duckhunt system responsive
-# Look for setting career at koders with something better at server setup
-# Google doc requirement on Koders App
-# Sprint showcase
-
-# Attendance System
-def check(reaction, user):
-    return str(reaction.emoji) == '⬆️' and user.bot is not True
-
-
-async def take_reaction(ctx, timeout=1200.0):
-    start = time.time()
-    try:
-        result = await bot.wait_for('reaction_add', check=check, timeout=timeout)
-    except asyncio.TimeoutError:
-        await ctx.delete()
-    else:
-        reaction, user = result
-        channel = await user.create_dm()
-        date_time = datetime.datetime.now()
-        embed = EMBEDS.attendance_dm(date_time.strftime("%D"), date_time.strftime("%H:%M:%S"), date_time.strftime("%A"))
-        await channel.send(embed=embed)
-        end = time.time()
-        timeout = timeout - (end - start)
-        logger.warning(user)
-
-        # Write into Gsheet Username Time Date
-        GSHEET.insert(date_time.strftime("%D"), date_time.strftime("%H:%M:%S"), user)
-        logger.warning(user)
-        await take_reaction(ctx, timeout=timeout)
-
-
-async def take_attendance_morning(ctx):
-    embed = EMBEDS.attendance("11:00", "11:20")
-    msg = await ctx.send(embed=embed)
-    await msg.add_reaction(emoji="⬆️")
-    await take_reaction(msg)
-
-
-async def take_attendance_lunch(ctx):
-    embed = EMBEDS.attendance("3:00", "3:20")
-    msg = await ctx.send(embed=embed)
-    await msg.add_reaction(emoji="⬆️")
-    await take_reaction(msg)
-
-
-@loop(minutes=1)
-async def attendance_task():
-    await bot.wait_until_ready()
-    channel = bot.get_channel(839125549304643684)  # attendance channel id
-    working_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-    date_time = datetime.datetime.now()
-    for working_day in working_days:
-        if working_day == date_time.strftime("%A") and date_time.strftime("%H:%M") == "11:00":
-            logger.info("Ran morning attendance.")
-            await take_attendance_morning(channel)
-        if working_day == date_time.strftime("%A") and date_time.strftime("%H:%M") == "15:00":
-            logger.info("Ran post lunch attendance.")
-            await take_attendance_lunch(channel)
-    logger.info("Waiting for tasks...")
-
-
-# Ping command
-@bot.command()
-@commands.has_any_role("@everyone")
-async def ping(msg):
-    await msg.send('Pong! 🏓\n ' +
-                'Name: Kourage \n ' +
-                'Description: AIO bot of Koders \n ' +
-                'Version: {0} \n '.format(CONFIG.VERSION) +
-                'Username: {0} \n '.format(msg.author.name) +
-                'Latency: {0} sec '.format(round(bot.latency, 1)))
-
-
-# Define command
-@bot.command()
-@commands.has_any_role("Koders")
-async def define(msg, *args):
-    response = None
-    word = args[0]  # API REQUEST
-    url = 'https://owlbot.info/api/v4/dictionary/' + str(word)
-    headers = {"Authorization": CONFIG.OWL_TOKEN}
-    try:
-        response = requests.get(url, headers=headers)
-    except Exception as e:
-        logger.error("Something went wrong during requesting API. Reason: " + str(e))  # Request exception
-
-    data = json.loads(response.text)  # JSON PARSE WITH EMBED
-    try:
-        for i in range(0, len(data['definitions'])):
-            embed = discord.Embed(title="Word: " + str(word), color=0x57b28f)
-            embed.set_author(name="Kourage Word Analyzer",
-                            url="https://www.github.com/koders-in/kourage",
-                            icon_url=bot.user.avatar_url)
-            if data['definitions'][i]['image_url'] is not None:
-                embed.set_thumbnail(url=data['definitions'][i]['image_url'])
-            embed.add_field(name="Type",
-                            value=data['definitions'][i]['type'],
-                            inline=True)
-            embed.add_field(name="Meaning",
-                            value="**" + data['definitions'][i]['definition'] + "**",
-                            inline=False)
-            if data['definitions'][i]['example'] is None:
-                data['definitions'][i]['example'] = "N/A"
-            embed.add_field(name="Example",
-                            value="_" + data['definitions'][i]['example'] + "_",
-                            inline=False)
-            embed.set_footer(text="Made with ❤️️  by Koders")
-            await msg.send(embed=embed)
-    except Exception as e:
-        Logger.error("Something went wrong during parsing JSON. Reason: " + str(e))  # JSON parsing exception
-        await msg.send("Can't find its meaning over the database")  # Sending message so user can read
-
-
-# Vision command
-@bot.command()
-@commands.has_any_role("Kore")
-async def vision(msg):
-    await msg.message.delete()
-    embed = EMBEDS.vision()
-    await msg.send(embed=embed)
-
-
-# Suggestion command
-@bot.command()
-@commands.has_any_role("Koders")
-async def suggestion(ctx):
-    emojis = ['✅','❌'] 
-    channel = bot.get_channel(849583285645475850)
-    
-    admin_embed = discord.Embed(colour=0x28da5b)
-    admin_embed=discord.Embed(title="Suggestion Bot", description="To accept the suggestion: ✅"
-                                                                    "To decline the suggestion: ❌", color=0x28da5b)
-    admin_embed.set_thumbnail(url="https://media.discordapp.net/attachments/700257704723087360/819643015470514236/SYM_TEAL.png?width=455&height=447")
-    admin_embed.timestamp = datetime.datetime.utcnow()
-    admin_embed.set_footer(text="Made with ❤️️  by Koders")
-    admin_embed.set_author(name = f'suggested by {ctx.message.author}', icon_url = f'{ctx.author.avatar_url}')
-    
-    # Title
-    title_embed = discord.Embed(colour=0x28da5b)
-    title_embed = discord.Embed(
-        title = 'Please tell me the title of the Suggestion',
+    # Temporary fix
+    username_embed = discord.Embed(colour=0x28da5b)
+    username_embed = discord.Embed(
+        title = 'Please input your Username',
         description = ' This request will timeout after a minute'
     )
-    sent = await ctx.send(embed = title_embed)
+    sent = await ctx.send(embed = username_embed)
     try:
         msg = await bot.wait_for(
             "message",
@@ -222,21 +55,137 @@ async def suggestion(ctx):
         
         if msg:
             await sent.delete()
-            titlemessage = msg.content
+            username = msg.content
+            await msg.delete()
+    
+    except asyncio.TimeoutError:
+        await sent.delete()
+        await ctx.send('Cancelling due to timeout.', delete_after = 60.0)
+
+    data = []
+    for row in cursor.execute('''SELECT RedmineAPI FROM main WHERE Name = ?''', (username, )):
+        row1 = row
+        
+    finalrow = row1[0]
+    
+    def check (reaction, user):
+        return not user.bot and  message == reaction.message 
+    
+    # acquiring data from the website
+    headers = {'content-type': 'application/json',
+        'X-Redmine-API-Key': f'{finalrow}'}
+    r = requests.get('https://kore.koders.in/projects.json', headers=headers)
+    
+    json_data = r.json()
+    projects = json_data['projects']
+
+    # Project ID
+    projectid_embed = discord.Embed(colour=0x28da5b)
+    projectid_embed = discord.Embed(
+        title = 'Please input the project ID of the issue',
+        description = ' This request will timeout after a minute'
+    )
+    for i in range(0,len(projects)):
+        projectid_embed.add_field(name = f"{projects[i]['id']}",value = f"{projects[i]['identifier']}" ,inline=False)
+    sent = await ctx.send(embed = projectid_embed)
+    try:
+        msg = await bot.wait_for(
+            "message",
+            timeout=60.0,
+            check=lambda message: message.author == ctx.author
+        )
+        
+        if msg:
+            await sent.delete()
+            projectidmessage = msg.content
             await msg.delete()
     
     except asyncio.TimeoutError:
         await sent.delete()
         await ctx.send('Cancelling due to timeout.', delete_after = 60.0)
         
+    # To get hold of the projectname
+    for i in range(len(projects)):
+        if(projects[i]['id'] == int(projectidmessage)):
+            projectname = projects[i]['identifier']
+
+    constanturl = 'https://kore.koders.in/projects/'
+    newurl = constanturl + projectname
+    
+    # for getting issue id, hit a get request with new url
+    newurl_issues = newurl + '/issues.json'
+
+    headers = {'content-type': 'application/json',
+        'X-Redmine-API-Key': f'{finalrow}'}
+    
+    r1 = requests.get(f'{newurl_issues}', headers=headers)
+    json_data1 = r1.json()
+    issues = json_data1['issues']
+    
+    print('ID','Subject','Assignee')
+    for i in range(len(issues)):
+        print(issues[i]['id'],issues[i]['subject'],issues[i]['assigned_to']['name'])
         
-    # description
-    description_embed = discord.Embed(colour=0x28da5b)
-    description_embed = discord.Embed(
-        title = 'Please tell me the Description of the Suggestion',
+    # Task ID
+    taskid_embed = discord.Embed(colour=0x28da5b)
+    taskid_embed = discord.Embed(
+        title = 'Please input the Issue ID of the issue',
+        description = ' This request will timeout after a minute'
+    )
+    for i in range(len(issues)):
+        taskid_embed.add_field(name=f"{issues[i]['id']}",value=f"{issues[i]['subject']}",inline=False)
+        # taskid_embed.add_field(name=f"{issues[i]['assigned_to']['name']}",value= "",inline=True)
+    
+    sent = await ctx.send(embed = taskid_embed)
+    try:
+        msg = await bot.wait_for(
+            "message",
+            timeout=60.0,
+            check=lambda message: message.author == ctx.author
+        )
+        
+        if msg:
+            await sent.delete()
+            taskidmessage = msg.content
+            issue_id = taskidmessage
+            await msg.delete()
+    
+    except asyncio.TimeoutError:
+        await sent.delete()
+        await ctx.send('Cancelling due to timeout.', delete_after = 60.0)
+    
+    
+    # hours embed
+    hours_embed = discord.Embed(colour=0x28da5b)
+    hours_embed = discord.Embed(
+        title = 'How many hours have you worked for today?',
+        description = ' This request will timeout after a minute'
+    )
+    sent = await ctx.send(embed =   hours_embed)
+    try:
+        msg = await bot.wait_for(
+            "message",
+            timeout=60.0,
+            check=lambda message: message.author == ctx.author
+        )
+        
+        if msg:
+            await sent.delete()
+            hoursmessage = msg.content
+            no_of_hours = hoursmessage
+            await msg.delete()
+    
+    except asyncio.TimeoutError:
+        await sent.delete()
+        await ctx.send('Cancelling due to timeout.', delete_after = 60.0)
+            
+    # comment embed
+    comment_embed = discord.Embed(colour=0x28da5b)
+    comment_embed = discord.Embed(
+        title = 'Any comments on your work today? ',
         description = ' This request will timeout after 5 minutes'
     )
-    sent2 = await ctx.send(embed = description_embed)
+    sent = await ctx.send(embed =   comment_embed)
     try:
         msg = await bot.wait_for(
             "message",
@@ -245,214 +194,78 @@ async def suggestion(ctx):
         )
         
         if msg:
-            await sent2.delete()
-            descriptionmessage = msg.content
+            await sent.delete()
+            commentmessage = msg.content
+            comments = commentmessage
             await msg.delete()
     
     except asyncio.TimeoutError:
-        await sent2.delete()
+        await sent.delete()
         await ctx.send('Cancelling due to timeout.', delete_after = 300.0)
         
-    # Unique ID
-    event_id = datetime.datetime.now().strftime('%Y%m-%d%H-%M%S-') + str(uuid4())
-    unique_id = event_id[48:].upper()
-    
-    admin_embed.add_field(name='Ticket ID: ', value = f'{unique_id}', inline=False)    
-    admin_embed.add_field(name = 'Title', value  = f'{titlemessage}',inline = False)
-    admin_embed.add_field(name = 'Description', value  = f'{descriptionmessage}',inline = False)
-
-    
-    # with open('results.csv', 'w', encoding='UTF8', newline='') as f:
-    #     writer = csv.DictWriter(f, fieldnames = ['Title', 'Description', 'ID', 'Status','Suggested By','Acknowledged By','Remarks'] )
-    #     writer.writeheader()
-    # make a csv called results or suggestions
-    
-    message = await channel.send(embed = admin_embed)
-    await message.add_reaction('✅')
-    await message.add_reaction('❌')
-    
-    sendEmbed = discord.Embed(colour = 0x28da5b)
-    # sendEmbed.add_field(name = 'New Suggestion!', value  = f'{suggestion}')
-    sendEmbed.add_field(name = 'Title', value  = f'{titlemessage}')
-    sendEmbed.add_field(name = 'Description', value  = f'{descriptionmessage}')
-    sendEmbed.add_field(name='Ticket ID: ', value = f'{unique_id}', inline=False) 
-    sendEmbed.set_author(name = f'suggested by {ctx.message.author}', icon_url = f'{ctx.author.avatar_url}')
-    sendEmbed.set_thumbnail(url="https://media.discordapp.net/attachments/700257704723087360/819643015470514236/SYM_TEAL.png?width=455&height=447")
-    sendEmbed.timestamp = datetime.datetime.utcnow()
-    sendEmbed.set_footer(text="Made with ❤️️  by Koders")
-    
-    def check (reaction, user):
-        return not user.bot and message == reaction.message
-    
-    try:
-        reaction, user = await bot.wait_for('reaction_add',check=check,timeout=604800) # this reaction is checking for adding an emoji, this line is automatically getting run because of like 31,32
-        # Role logic
-        role_string = ''
-        for role in user.roles:
-            if(role.name == '@everyone'):
-                continue
-            else:
-                role_string += role.name
-                role_string += ','
-        role_string = role_string[:-1]
         
-        while reaction.message == message:
-            if str(reaction.emoji) == "✅":
-                
-                # Remarks Embed
-                remarks_embed = discord.Embed(colour=0x28da5b)
-                remarks_embed = discord.Embed(
-                    title = 'Any remarks to be added? ',
-                    description = ' This request will timeout after 5 minutes'
-                )
-                
-                remarks = await channel.send(embed = remarks_embed)
-                try:
-                    msg = await bot.wait_for(
-                        "message",
-                        timeout=300.0,
-                        check=lambda message: message.author == ctx.author
-                    )
-                    
-                    if msg:
-                        await remarks.delete()
-                        remarksmessage = msg.content
-                        await msg.delete()
-                
-                except asyncio.TimeoutError:
-                    await remarks.delete()
-                    await channel.send('Cancelling due to timeout.', delete_after = 300.0)
-                    
-                # CSV File logic
-                data = []
-
-                data.append(titlemessage)
-                data.append(descriptionmessage)
-                data.append(unique_id)
-                data.append("Approved")
-                data.append(ctx.message.author)
-                data.append(user)
-                data.append(remarksmessage)
-                
-                with open('results.csv', 'a', newline='') as f:
-                    writer = csv.writer(f)
-                    writer.writerow(data)
-
-                del data
-                                    
-                await ctx.send(f'🙌🙌 Bravo!! Your suggestion has been Acknowledged by {user} who has these roles ({role_string}). We appreciate your efforts!')
-                sendEmbed.add_field(name='Approved by:  ', value = f'{user}', inline=False)
-                sendEmbed.add_field(name='Remarks: ',value = f'{remarksmessage}',inline=False)
-                
-                await ctx.send("Your Suggestion was: ")
-                message1 = await ctx.send(embed = sendEmbed)
-                
-                await channel.send(f'suggestion of {ctx.message.author}, with ID: {unique_id} has been approved by {user} who has these roles ({role_string}), this post will no longer be active')
-                return
-            if str(reaction.emoji) == "❌":
-                
-                # Remarks Embed
-                remarks_embed = discord.Embed(colour=0x28da5b)
-                remarks_embed = discord.Embed(
-                    title = 'Any remarks to be added? ',
-                    description = ' This request will timeout after 5 minutes'
-                )
-                
-                remarks = await channel.send(embed = remarks_embed)
-                try:
-                    msg = await bot.wait_for(
-                        "message",
-                        timeout=300.0,
-                        check=lambda message: message.author == ctx.author
-                    )
-                    
-                    if msg:
-                        await remarks.delete()
-                        remarksmessage = msg.content
-                        await msg.delete()
-                
-                except asyncio.TimeoutError:
-                    await remarks.delete()
-                    await channel.send('Cancelling due to timeout.', delete_after = 300.0)
-                
-                await ctx.send(f'🌸 Sorry! Your suggestion has not been Acknowledged by {user} who has these roles ({role_string}). We thank you for your valuable time!')
-                sendEmbed.add_field(name='Approved by:  ', value = f'{user}', inline=False)
-                sendEmbed.add_field(name='Remarks: ',value = f'{remarksmessage}',inline=False) 
-                await ctx.send("Your Suggestion was: ")
-                message1 = await ctx.send(embed = sendEmbed)
-                
-                # CSV Logic
-                data = []
-
-                data.append(titlemessage)
-                data.append(descriptionmessage)
-                data.append(unique_id)
-                data.append("Rejecetd")
-                data.append(ctx.message.author)
-                data.append(user)
-                data.append(remarksmessage)
-                
-                with open('results.csv', 'a', newline='') as f:
-                    writer = csv.writer(f)
-                    # write the data
-                    writer.writerow(data)
-
-                del data
-                    
-                await channel.send(f'suggestion of {ctx.message.author}, with ID: {unique_id} has not been approved by {user} who has these roles ({role_string}), this post will no longer be active')
-                return
+        
+    # Activity ID  embed
+    activity_id_embed = discord.Embed(colour=0x28da5b)
+    activity_id_embed = discord.Embed(
+        title = 'Please Enter the activity ID: (8 -> designing ,9 -> development, 10 -> Management, 11 -> Content Creation, 12 -> Marketing, 13 -> Planning) ',
+        description = ' This request will timeout after a minute'
+    )
+    sent = await ctx.send(embed =   activity_id_embed)
+    try:
+        msg = await bot.wait_for(
+            "message",
+            timeout=60.0,
+            check=lambda message: message.author == ctx.author
+        )
+        
+        if msg:
+            await sent.delete()
+            activity_id_message = msg.content
+            activity_id = activity_id_message
+            await msg.delete()
+    
     except asyncio.TimeoutError:
-        await ctx.send("Your suggestion was timed out. Please try again!")
-        return
-
-
-# Remind command
-@bot.command()
-@commands.has_any_role("Koders")
-async def remind(msg, *args):
-    await msg.message.delete()
-    await asyncio.sleep(float(args[0]) * 60 * 60)
-    embed = discord.Embed(title="Hello there! You have a reminder ^_^",
-                        color=0x57b28f)
-    embed.add_field(name="Don't forget to:",
-                    value="{0}".format(args[1]),
-                    inline=False)
-    embed.add_field(name="By yours truly :ghost:",
-                    value="Kourage",
-                    inline=False)
-    embed.set_thumbnail(url="https://www.flaticon.com/svg/static/icons/svg/2919/2919780.svg")
-    embed.set_footer(text="Made with ❤️️  by Koders")
-    await msg.send(embed=embed)
-    if len(args) > 2:
-        msg = await msg.send(args[2])
-        await msg.delete()  # Deletes @person message who got tagged
-
-
-# Poll command
-@bot.command()
-@commands.has_any_role('Koders')
-async def poll(msg, question, *options: str):
-    await msg.message.delete()
-    embed = discord.Embed(title="Hello there! Please vote. ^_^",
-                        description=question,
-                        color=0x54ab8a)
-    embed.set_author(name="Koders")
-    reactions = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣']
-    for _x, option in enumerate(options):
-        embed.add_field(name=reactions[_x],
-                        value=option,
-                        inline=True)
-    embed.set_footer(text="Made with ❤️️  by Koders")
-    react_message = await msg.send(embed=embed)
-    for reaction in reactions[:len(options)]:
-        await react_message.add_reaction(reaction)
+        await sent.delete()
+        await ctx.send('Cancelling due to timeout.', delete_after = 60.0)
+    
+    # Finally, making a Post Request Now
+    payload={'time_entry[hours]': f'{no_of_hours}',
+            'time_entry[issue_id]': f'{issue_id}',
+            'time_entry[comments]': f'{comments}',
+            'time_entry[activity_id]': f'{activity_id}'}
+    
+    headers = {'X-Redmine-API-Key':f'{finalrow}'}
+    r = requests.post('https://kore.koders.in/time_entries.xml', headers=headers,data=payload)
+    
+    print(r.text)
+    print(r.status_code)
         
+        
+    #  Final embed with all of the messages included along with activities
+    finalembed = discord.Embed(colour = 0x28da5b)
+    finalembed = discord.Embed(title='You have successfully logged in your work for today! ')
+    finalembed.add_field(name = 'Task ID', value  = f'{issue_id}',inline=False)
+    finalembed.add_field(name = 'Hours worked', value  = f'{no_of_hours}')
+    finalembed.add_field(name='Comments ', value = f'{comments}', inline=False)
+    if(activity_id == '8'):
+        finalembed.add_field(name='Activity Id: ', value = 'Designing', inline=False)
+    elif(activity_id == '9'):
+        finalembed.add_field(name='Activity Id: ', value = 'Development', inline=False)
+    elif(activity_id == '10'):
+        finalembed.add_field(name='Activity Id: ', value = 'Management', inline=False)
+    elif(activity_id == '11'):
+        finalembed.add_field(name='Activity Id: ', value = 'Content Creation', inline=False)
+    elif(activity_id == '12'):
+        finalembed.add_field(name='Activity Id: ', value = 'Marketing', inline=False)
+    elif(activity_id == '13'):
+        finalembed.add_field(name='Activity Id: ', value = 'Planning', inline=False)
+    finalembed.set_author(name = f'{ctx.message.author}', icon_url = f'{ctx.author.avatar_url}')
+    finalembed.set_thumbnail(url="https://media.discordapp.net/attachments/700257704723087360/819643015470514236/SYM_TEAL.png?width=455&height=447")
+    finalembed.timestamp = datetime.datetime.utcnow()
+    finalembed.set_footer(text="Made with ❤️️  by Koders")
+    
+    finalmessage = await ctx.send(embed=finalembed)
+    
+    
 
-
-
-if __name__ == "__main__":
-    try:
-        attendance_task.start()
-        bot.run(CONFIG.TOKEN)
-    except Exception as _e:
-        logging.warning("Exception found at main worker. Reason: " + str(_e), exc_info=True)
